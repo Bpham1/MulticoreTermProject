@@ -48,15 +48,39 @@ public class LinearRegression {
 		
 	}
 	
-	public boolean fit() throws InterruptedException {
-		slopeEstimator();
-		interceptEstimator();
+	public boolean fit(boolean gradient, boolean parallel) throws InterruptedException {
+		if(parallel) {
+			parallelSlopeEstimator();
+			if (gradient) gradientInterceptEstimator();
+			else simpleInterceptEstimator();
+		} else {
+			sequentialSlopeEstimator();
+			if (gradient) sequentialGradientInterceptEstimator();
+			else simpleInterceptEstimator();
+		}
 		return true;
 	}
 	
+	public boolean fit() throws InterruptedException {
+		parallelSlopeEstimator();
+		simpleInterceptEstimator();
+		return true;
+	}
+
+	public boolean fit(boolean parallel) throws InterruptedException{
+		if(parallel) {
+			parallelSlopeEstimator();
+			simpleInterceptEstimator();
+		} else {
+			sequentialSlopeEstimator();
+			simpleInterceptEstimator();
+		}
+		return true;
+	}
+
 	//@TODO Optimize 
 	
-	private void slopeEstimator() throws InterruptedException {
+	private void parallelSlopeEstimator() throws InterruptedException {
 		//Calculate slope numerator
 		CountDownLatch countDownLatch = new CountDownLatch(threadCount);
 		AtomicReference<CountDownLatch> countDownLatchRef = new AtomicReference<CountDownLatch>(countDownLatch);
@@ -104,10 +128,45 @@ public class LinearRegression {
 		long slope_long = numeratorSumRef.get().get() / denominatorSumRef.get().get();
 		slope = new Double(slope_long);
 	}
+
+	private void sequentialSlopeEstimator() {
+		Double numerator = new Double(0.0);
+		for(int index = 0; index < dataSize; index++) {
+			Double xError = x[index] - xMean;
+			Double yError = y[index] - yMean;
+			numerator += xError * yError;
+		}
+		Double denominator = 1.0;
+		for(int index = 0; index < dataSize; index++) {
+			Double xError = x[index] - xMean;
+			denominator += xError * xError;
+		}
+		slope = numerator / denominator;
+	}
 	
+	private void simpleInterceptEstimator() {
+		intercept = yMean - slope * xMean;
+	}
 	
-	
-	private void interceptEstimator() {
+	private void gradientInterceptEstimator() {
 		
 	}
+	
+	private void sequentialGradientInterceptEstimator() {
+		
+	}
+	
+	public Double getSlope() {
+		return slope;
+	}
+	
+	public Double getIntercept() {
+		return intercept;
+	}
+	
+	public Double getEstimatedValue(Double xValue) {
+		return intercept + xValue * slope;
+	}
+	
+	
 }
