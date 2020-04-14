@@ -23,7 +23,9 @@ public class LinearRegression {
 	int threadCount;
 	int threadData;
 	int remainder;
-	
+	final int MAX_DESCENT_ITERATIONS = 5000;
+	final double INITIAL_INTERCEPT = 0.0;
+	final double PRESICION = 0.0001;
 	
 	public LinearRegression(Double[] x, Double[] y) {
 		//Input Checks
@@ -153,7 +155,25 @@ public class LinearRegression {
 	}
 	
 	private void sequentialGradientInterceptEstimator() {
-		
+		double learningRate = 0.001;
+		double stepSize = 0;
+		double gIntercept = INITIAL_INTERCEPT;
+		double gSlope = Double.MAX_VALUE;
+		int iteration = 0;
+		while(iteration < MAX_DESCENT_ITERATIONS && (gSlope <= PRESICION || gSlope >= -PRESICION)) {
+			gSlope = sequentialSquareResidualSum(gIntercept);
+			stepSize = gSlope * learningRate;
+			gIntercept = gIntercept - stepSize;
+		}
+		intercept = new Double(gIntercept);
+	}
+	
+	private double sequentialSquareResidualSum(double gIntercept) {
+		double sum = 0;
+		for(int index = 0; index < dataSize; index++) {
+			sum += -2*(y[index] - (gIntercept + slope * x[index]));
+		}
+		return sum;
 	}
 	
 	public Double getSlope() {
