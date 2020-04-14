@@ -23,9 +23,9 @@ public class LinearRegression {
 	int threadCount;
 	int threadData;
 	int remainder;
-	final int MAX_DESCENT_ITERATIONS = 5000;
+	final int MAX_DESCENT_ITERATIONS = 5000000;
 	final double INITIAL_INTERCEPT = 0.0;
-	final double PRESICION = 0.0001;
+	final double PRESICION = 0.001;
 	final int NUM_SUB_ESTIMATES = 6;
 	
 	public LinearRegression(Double[] x, Double[] y) {
@@ -42,9 +42,10 @@ public class LinearRegression {
 		this.yRef = new AtomicReference<Double[]>(this.y);
 		intercept = 0.0;
 		slope = 0.0;
-		xMean = Arrays.asList(x).parallelStream().mapToDouble(val -> val).average().orElse(0.0);
-		yMean = Arrays.asList(y).parallelStream().mapToDouble(val -> val).average().orElse(0.0);
 		dataSize = x.length;
+		xMean = Arrays.asList(x).stream().mapToDouble(val -> val).average().orElse(0.0);
+		yMean = Arrays.asList(y).stream().mapToDouble(val -> val).average().orElse(0.0);
+		System.out.println("xMean, yMean: " + xMean + "," + yMean);
 		threadCount = MultithreadUtilities.getThreadStats(dataSize).threadData;
 		remainder = MultithreadUtilities.getThreadStats(dataSize).remainderData;
 		threadData = MultithreadUtilities.getThreadStats(dataSize).threadData;
@@ -54,7 +55,7 @@ public class LinearRegression {
 	public boolean fit(boolean gradient, boolean parallel) throws InterruptedException {
 		if(parallel) {
 			parallelSlopeEstimator();
-			if (gradient) gradientInterceptEstimator();
+			if (gradient) sequentialGradientInterceptEstimator(); //Change to parallel later
 			else simpleInterceptEstimator();
 		} else {
 			sequentialSlopeEstimator();
@@ -133,13 +134,14 @@ public class LinearRegression {
 	}
 
 	private void sequentialSlopeEstimator() {
+		System.out.println("Running sequential slope estimator with dataSize: " + dataSize);
 		Double numerator = new Double(0.0);
 		for(int index = 0; index < dataSize; index++) {
-			Double xError = x[index] - xMean;
+			Double xError = (x[index] - xMean);
 			Double yError = y[index] - yMean;
 			numerator += xError * yError;
 		}
-		Double denominator = 1.0;
+		Double denominator = new Double(0.0);
 		for(int index = 0; index < dataSize; index++) {
 			Double xError = x[index] - xMean;
 			denominator += xError * xError;
@@ -156,6 +158,7 @@ public class LinearRegression {
 	}
 	
 	private void sequentialGradientInterceptEstimator() {
+		System.out.println("Running sequential gradient descent estimator with dataSize: " + dataSize);
 		double learningRate = 0.001;
 		double stepSize = 0;
 		double gIntercept = INITIAL_INTERCEPT;
@@ -165,6 +168,7 @@ public class LinearRegression {
 			gSlope = sequentialSquareResidualSum(gIntercept);
 			stepSize = gSlope * learningRate;
 			gIntercept = gIntercept - stepSize;
+			iteration += 1;
 		}
 		intercept = new Double(gIntercept);
 	}
@@ -189,5 +193,18 @@ public class LinearRegression {
 		return intercept + xValue * slope;
 	}
 	
+	
+	//Main method, used for testing purposes
+	public static void main(String[] args) throws InterruptedException {
+		System.out.println("Starting Linear Regression");
+		Double[] xIn = {0.5,2.3,2.9};
+		Double[] yIn = {1.4,1.9,3.2};
+		LinearRegression lr = new LinearRegression(xIn,yIn);
+		System.out.println("Running sequential fit");
+		lr.fit(true, false);
+		Double slopeOut = lr.getSlope();
+		Double interceptOut = lr.getIntercept();
+		System.out.println("Estimated Equation: y = " + slopeOut + "x + " + interceptOut);
+	}
 	
 }
