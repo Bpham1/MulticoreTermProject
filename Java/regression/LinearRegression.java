@@ -26,6 +26,7 @@ public class LinearRegression {
 	final int MAX_DESCENT_ITERATIONS = 5000;
 	final double INITIAL_INTERCEPT = 0.0;
 	final double PRESICION = 0.0001;
+	final int NUM_SUB_ESTIMATES = 6;
 	
 	public LinearRegression(Double[] x, Double[] y) {
 		//Input Checks
@@ -64,7 +65,7 @@ public class LinearRegression {
 	}
 	
 	public boolean fit() throws InterruptedException {
-		parallelSlopeEstimator();
+		sequentialSlopeEstimator();
 		simpleInterceptEstimator();
 		return true;
 	}
