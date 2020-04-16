@@ -1,9 +1,13 @@
 package regression;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -23,10 +27,10 @@ public class LinearRegression {
 	int threadCount;
 	int threadData;
 	int remainder;
-	final int MAX_DESCENT_ITERATIONS = 5000000;
+	final int MAX_DESCENT_ITERATIONS = 5000;
 	final double INITIAL_INTERCEPT = 0.0;
 	final double PRESICION = 0.001;
-	final int NUM_SUB_ESTIMATES = 6;
+	final int NUM_SUB_ESTIMATES = 1;
 	
 	public LinearRegression(Double[] x, Double[] y) {
 		//Input Checks
@@ -46,16 +50,16 @@ public class LinearRegression {
 		xMean = Arrays.asList(x).stream().mapToDouble(val -> val).average().orElse(0.0);
 		yMean = Arrays.asList(y).stream().mapToDouble(val -> val).average().orElse(0.0);
 		System.out.println("xMean, yMean: " + xMean + "," + yMean);
-		threadCount = MultithreadUtilities.getThreadStats(dataSize).threadData;
+		threadCount = MultithreadUtilities.getThreadStats(dataSize).threadCount;
 		remainder = MultithreadUtilities.getThreadStats(dataSize).remainderData;
 		threadData = MultithreadUtilities.getThreadStats(dataSize).threadData;
-		
+		System.out.println("remainder: " + remainder);
 	}
 	
-	public boolean fit(boolean gradient, boolean parallel) throws InterruptedException {
+	public boolean fit(boolean gradient, boolean parallel) throws InterruptedException, ExecutionException {
 		if(parallel) {
 			parallelSlopeEstimator();
-			if (gradient) sequentialGradientInterceptEstimator(); //Change to parallel later
+			if (gradient) gradientInterceptEstimator(); //Change to parallel later
 			else simpleInterceptEstimator();
 		} else {
 			sequentialSlopeEstimator();
@@ -71,7 +75,7 @@ public class LinearRegression {
 		return true;
 	}
 
-	public boolean fit(boolean parallel) throws InterruptedException{
+	public boolean fit(boolean parallel) throws InterruptedException, ExecutionException{
 		if(parallel) {
 			parallelSlopeEstimator();
 			simpleInterceptEstimator();
@@ -82,55 +86,32 @@ public class LinearRegression {
 		return true;
 	}
 
-	//@TODO Optimize 
+	//TODO Optimize 
 	
-	private void parallelSlopeEstimator() throws InterruptedException {
-		//Calculate slope numerator
+	private void parallelSlopeEstimator() throws InterruptedException, ExecutionException {
+		System.out.println("Running parallel slope estimator with dataSize: " + dataSize + " and threadCount: " + threadCount);
 		CountDownLatch countDownLatch = new CountDownLatch(threadCount);
 		AtomicReference<CountDownLatch> countDownLatchRef = new AtomicReference<CountDownLatch>(countDownLatch);
-		slopeNumeratorThread[] slopeNumeratorThreads = new slopeNumeratorThread[threadCount];
-		AtomicLong numeratorSum = new AtomicLong(0);
-		AtomicReference<AtomicLong> numeratorSumRef = new AtomicReference<AtomicLong>(numeratorSum);
-		ExecutorService numeratorPool = Executors.newFixedThreadPool(threadCount);
-		for(int i  = 0; i < threadCount; i++) {
-			int start = i * threadData;
-			int end = (i+1) * threadData - 1;
-			if(i == threadCount -1) end += remainder;
-			slopeNumeratorThreads[i] = new slopeNumeratorThread(
-					start, end,
-					xRef, yRef,
-					numeratorSumRef,
-					xMean, yMean,
-					countDownLatchRef);
-			numeratorPool.execute(slopeNumeratorThreads[i]);
-		}
-		countDownLatch.await();
-		numeratorPool.shutdown();
-		
-		//Calculate slope denominator
-		countDownLatch = new CountDownLatch(threadCount);
-		countDownLatchRef = new AtomicReference<CountDownLatch>(countDownLatch);
-		slopeDenominatorThread[] slopeDenominatorThreads = new slopeDenominatorThread[threadCount];
-		AtomicLong denominatorSum = new AtomicLong(0);
-		AtomicReference<AtomicLong> denominatorSumRef = new AtomicReference<AtomicLong>(denominatorSum);
-		ExecutorService denominatorPool = Executors.newFixedThreadPool(threadCount);
+		ExecutorService pool = Executors.newFixedThreadPool(threadCount);
+		List<Future<Double[]>> futures = new ArrayList<Future<Double[]>>();
 		for(int i = 0; i < threadCount; i++) {
-			int start = i * threadData;
-			int end = (i+1) * threadData - 1;
-			if(i == threadCount -1) end += remainder;
-			slopeDenominatorThreads[i] = new slopeDenominatorThread(
-					start, end,
-					xMean,
-					xRef,
-					denominatorSumRef,
-					countDownLatchRef);
-			denominatorPool.execute(slopeDenominatorThreads[i]);
+			int start = i * dataSize;
+			int end = (i+1) * dataSize -1;
+			if(i == threadCount -1 && remainder != dataSize) end += remainder;
+			slopeThread t = new slopeThread(start, end, xRef, yRef, xMean, yMean, countDownLatchRef);
+			Future<Double[]> sums = pool.submit(t);
+			futures.add(sums);
 		}
-		countDownLatch.await();
-		denominatorPool.shutdown();
-		//Calculate slope
-		long slope_long = numeratorSumRef.get().get() / denominatorSumRef.get().get();
-		slope = new Double(slope_long);
+		double numerator = 0;
+		double denominator = 0;
+		countDownLatchRef.get().await();
+		System.out.println("slopeThreads finished execution");
+		Thread.sleep(5);
+		for(Future<Double[]> sums : futures) {
+			numerator += sums.get()[0];
+			denominator += sums.get()[1];
+		}
+		slope = new Double(numerator / denominator);
 	}
 
 	private void sequentialSlopeEstimator() {
@@ -153,8 +134,50 @@ public class LinearRegression {
 		intercept = yMean - slope * xMean;
 	}
 	
-	private void gradientInterceptEstimator() {
-		
+	private void gradientInterceptEstimator() throws InterruptedException, ExecutionException {
+		System.out.println("Running parallel gradient descent estimator v1 with dataSize: " + dataSize + " threadData: " + threadData);
+		double learningRate = 0.001;
+		double stepSize = 0;
+		double gIntercept = INITIAL_INTERCEPT;
+		double gSlope = Double.MAX_VALUE;
+		int iteration  = 0;
+		//Loop for MAX_ITERATIONS or until gSlope is 0.0 +- PRESICION
+		while(iteration < MAX_DESCENT_ITERATIONS && (gSlope <= PRESICION || gSlope >= -PRESICION)) {
+			//Loop through each sub estimate
+			for(int estimate = 0; estimate < NUM_SUB_ESTIMATES; estimate++) {
+				Double modGIntercept = gIntercept - stepSize * (estimate + 1);
+				double threadSlope = parallelSumSquareResidual(modGIntercept);
+				gIntercept = (Math.abs(threadSlope) < Math.abs(gSlope)) ? modGIntercept : gIntercept;
+				gSlope = (Math.abs(threadSlope) < Math.abs(gSlope)) ? threadSlope : gSlope;
+			}
+			stepSize = gSlope * learningRate;
+			gIntercept -= stepSize;
+			iteration += 1;
+			System.out.println("gSlope : " + gSlope + " gIntercept: " + gIntercept);
+		}
+		intercept = new Double(gIntercept);
+	}
+	
+	private double parallelSumSquareResidual(Double gIntercept) throws InterruptedException, ExecutionException {
+		double residualSum = 0.0;
+		CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+		AtomicReference<CountDownLatch> countDownLatchRef = new AtomicReference<CountDownLatch>(countDownLatch);
+		ExecutorService pool = Executors.newFixedThreadPool(threadCount);
+		List<Future<Double>> sums = new ArrayList<Future<Double>>();
+		for(int i = 0; i < threadCount; i++) {
+			int start = i * dataSize;
+			int end = (i+1) * dataSize -1;
+			if(i == threadCount -1 && remainder != dataSize) end += remainder;
+			sumSquareResidualsThread t = new sumSquareResidualsThread(start,end,slope,gIntercept,xRef,yRef,countDownLatchRef);
+			Future<Double> sum = pool.submit(t);
+			sums.add(sum);
+		}
+		countDownLatchRef.get().await();
+		Thread.sleep(5);
+		for(Future<Double> sum : sums) {
+			residualSum += sum.get();
+		}
+		return residualSum;
 	}
 	
 	private void sequentialGradientInterceptEstimator() {
@@ -195,16 +218,19 @@ public class LinearRegression {
 	
 	
 	//Main method, used for testing purposes
-	public static void main(String[] args) throws InterruptedException {
+	public static void main(String[] args) throws InterruptedException, ExecutionException {
 		System.out.println("Starting Linear Regression");
 		Double[] xIn = {0.5,2.3,2.9};
 		Double[] yIn = {1.4,1.9,3.2};
+		boolean gradient = true;
+		boolean parallel = true;
 		LinearRegression lr = new LinearRegression(xIn,yIn);
-		System.out.println("Running sequential fit");
-		lr.fit(true, false);
+		System.out.println("Running fit with gradient: " + gradient + " parallel: " + parallel);
+		lr.fit(gradient, parallel);
 		Double slopeOut = lr.getSlope();
 		Double interceptOut = lr.getIntercept();
 		System.out.println("Estimated Equation: y = " + slopeOut + "x + " + interceptOut);
+		System.exit(0);
 	}
 	
 }
