@@ -3,6 +3,7 @@ Calcuates the slope and intercept of an estimated line-of-best fit for data sepe
 using Least Mean Squared (LMS) and/or a custom version of Gradient Descent with both sequential and parallel iterations.
 
 FOR FULL DESCRIPTIONS OF CLASSES, METHODS, VARIABLES PLEASE SEE THE INCLUDED JAVADOC IN ./doc
+OR AT https://aswanmordor.github.io/LinearRegression/
 
 -- Package Descriptions --
 optimized.regression : The main production package containing 
