@@ -85,9 +85,6 @@ public class DescisionTreeEstimator implements Estimator{
         this.Y = Y;
         XInputs.add(X);
         YInputs.add(Y);
-        double highestGain = -1;
-        double bestThreshold = -1;
-        int bestFeature = -1;
         if(feature_set == null){
             IntStream idx_stream = IntStream.range(0, this.X.get(0).size());
             feature_set = idx_stream.boxed().collect(Collectors.toList());
@@ -105,6 +102,13 @@ public class DescisionTreeEstimator implements Estimator{
         List<List<Double>> currentX;
         List<Integer> currentY;
         while(treePool.size() != 0){
+            double highestGain = -1;
+            double bestThreshold = -1;
+            int bestFeature = -1;
+
+            System.out.println("Getting Current Tree");
+            System.out.println("Tree Pool Size: " + treePool.size());
+            System.out.println("Removing 1 tree");
             currentTree = treePool.remove(0);
             currentX = XInputs.remove(0);
             currentY = YInputs.remove(0);
@@ -112,9 +116,14 @@ public class DescisionTreeEstimator implements Estimator{
             currentTree.classCount = getClassCount(currentY);
             currentTree.impurity = getImpurity(currentTree.classCount);
 
+            //System.out.println("Impurity: " + currentTree.impurity);
+
             if(currentTree.classCount.keySet().size() == 1){
-                currentTree.classifiers = (List<Integer>) currentTree.classCount.keySet();
+                System.out.println("Only one class");
+                currentTree.classifiers = new ArrayList<Integer>();
+                currentTree.classifiers.addAll(currentTree.classCount.keySet());
             } else {
+                System.out.println("More than one class");
                 idx_stream = IntStream.range(0, currentX.size());
                 rowIdxs = idx_stream.boxed().collect(Collectors.toList());
 
@@ -155,6 +164,9 @@ public class DescisionTreeEstimator implements Estimator{
                     }
                 }
                 executor.shutdown();
+                System.out.println("Highest Gain: " + highestGain);
+                System.out.println("Best Threshold: " + bestThreshold);
+                System.out.println("Best Feature: " + bestFeature);
                 currentTree.feature_idx = bestFeature;
                 currentTree.threshold = bestThreshold;
                 splitTree(currentX, currentY, bestFeature, bestThreshold, currentTree);
@@ -170,7 +182,8 @@ public class DescisionTreeEstimator implements Estimator{
         List<Integer> greaterY = new ArrayList<Integer>();
 
         for(int i = 0; i < splitX.size(); i++){
-            if(splitX.get(i).get(feature_idx) > threshold){
+            System.out.println("Value: " + splitX.get(i).get(feature_idx) + "; Threshold: " + threshold);
+            if(splitX.get(i).get(feature_idx) >= threshold){
                 greaterX.add(splitX.get(i));
                 greaterY.add(splitY.get(i));
             } else {
@@ -182,6 +195,7 @@ public class DescisionTreeEstimator implements Estimator{
         if(greaterX.size() != 0 && lessX.size() != 0){
             currentTree.greaterTree = new DescisionTreeEstimator(n_jobs, feature_set);
             currentTree.lessTree = new DescisionTreeEstimator(n_jobs, feature_set);
+            System.out.println("Adding 2 trees");
             treePool.add(currentTree.greaterTree);
             XInputs.add(greaterX);
             YInputs.add(greaterY);
@@ -189,10 +203,11 @@ public class DescisionTreeEstimator implements Estimator{
             XInputs.add(lessX);
             YInputs.add(lessY);
         } else {
+            System.out.println("Special case");
+
             // Special case: identical features, but different classification
-            for(int key: currentTree.classCount.keySet()){
-                currentTree.classifiers = (List<Integer>) currentTree.classCount.keySet();
-            }
+            currentTree.classifiers = new ArrayList<Integer>();
+            currentTree.classifiers.addAll(currentTree.classCount.keySet());
         }
     }
 
@@ -269,33 +284,46 @@ public class DescisionTreeEstimator implements Estimator{
                 for(int i = 0; i < feature_set.size(); i++){
                     List<Double> row = testX.get(rowIdx);
                     double threshold = row.get(i);
+                    //System.out.println("Feature: " + i + "; Threshold: " + threshold);
                     // Split rows into groups based on threshold
                     for(int j = 0; j < testX.size(); j++){
-                        if(testX.get(i).get(feature_idx) > threshold){
-                            if(!testGreaterCount.containsKey(testY.get(i))){
-                                testGreaterCount.put(testY.get(i), 0);
+                        //System.out.println("Value: " + testX.get(j).get(feature_idx));
+                        if(testX.get(j).get(i) >= threshold){
+                            //System.out.println("Adding row " + j + " to greater group");
+                            if(!testGreaterCount.containsKey(testY.get(j))){
+                                testGreaterCount.put(testY.get(j), 0);
                             }
-                            testGreaterCount.put(testY.get(i), testGreaterCount.get(testY.get(i)) + 1);
+                            testGreaterCount.put(testY.get(j), testGreaterCount.get(testY.get(j)) + 1);
                         } else {
-                            if(!testLessCount.containsKey(testY.get(i))){
-                                testLessCount.put(testY.get(i), 0);
+                            //System.out.println("Adding row " + j + " to less group");
+                            if(!testLessCount.containsKey(testY.get(j))){
+                                testLessCount.put(testY.get(j), 0);
                             }
-                            testLessCount.put(testY.get(i), testLessCount.get(testY.get(i)) + 1);
+                            testLessCount.put(testY.get(j), testLessCount.get(testY.get(j)) + 1);
                         }
                     }
-                    // Get impurity for each group
-                    double lessImpurity = getImpurity(testLessCount);
-                    double greaterImpurity = getImpurity(testGreaterCount);
                     double avgImpurity;
                     // Calculate avgerage impurity (no gain if
-                    if(lessImpurity == 0.0 || greaterImpurity == 0.0){
+                    if(testLessCount.keySet().size() == 0 || testGreaterCount.keySet().size() == 0){
                         avgImpurity = 1.0;
                     } else {
+                        // Get impurity for each group
+                        double lessImpurity = getImpurity(testLessCount);
+                        //System.out.println("Less Impurity: " + lessImpurity +  "; Size: " + testLessCount.keySet().size());
+                        double greaterImpurity = getImpurity(testGreaterCount);
+                        //System.out.println("Greater Impurity: " + greaterImpurity +  "; Size: " + testGreaterCount.keySet().size());
+
                         avgImpurity = ((double) testLessCount.size() / (double) testX.size()) * lessImpurity
                                 + ((double) testLessCount.size() / (double) testX.size()) * greaterImpurity;
                     }
+                    //System.out.println("Average Impurity: " + avgImpurity);
                     double gain = testImpurity - avgImpurity;
+                    //System.out.println("Gain: " + gain);
+
                     if(gain > highestGain){
+                        //System.out.println("New Highest Gain: " + gain);
+                        //System.out.println("New Best Feature: " + i);
+                        //System.out.println("New Best Threshold: " + threshold);
                         highestGain = gain;
                         bestFeatureIdx = i;
                         bestThreshold = threshold;
@@ -304,6 +332,9 @@ public class DescisionTreeEstimator implements Estimator{
                     testGreaterCount.clear();
                 }
             }
+            //System.out.println("bestFeatureIdx: " + bestFeatureIdx);
+            //System.out.println("bestThreshold: " + bestThreshold);
+            //System.out.println("highestGain: " + highestGain);
             return new FeatThreshPair(bestFeatureIdx, bestThreshold, highestGain);
         }
     }
