@@ -20,7 +20,7 @@ public class OptionalPrinter {
 	 * Wrapper int for level 1 verbosity, used to help organization.
 	 */
 	public static final int HIGH_PRIORITY = 1;
-	
+	 
 	/**
 	 * Wrapper int for level 2 verbosity, used to help organization.
 	 */

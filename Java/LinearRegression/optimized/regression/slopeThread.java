@@ -78,7 +78,8 @@ public class slopeThread implements Callable<Double[]>{
 	 */
 	@Override
 	public Double[] call() throws Exception {
-		Double[] sums = new Double[2];
+		System.out.println("Slope thread init.");
+		Double[] sums = new Double[2]; 
 		sums[0] = new Double(0); //numerator
 		sums[1] = new Double(0); //denominator
 		for(int index = start; index <= end; index++) {

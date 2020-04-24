@@ -71,7 +71,7 @@ public class sumSquareResidualsThread implements Callable<Double>{
 		this.gIntercept = gIntercept;
 		this.x = x;
 		this.y = y;
-		this.countDownLatch = countDownLatch;
+		this.countDownLatch = countDownLatch; 
 	}
 
 	/**

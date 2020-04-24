@@ -17,11 +17,32 @@ import regression.slopeThread;
  * <h1> Linear Regression </h1>
  * Linear Regression implements a sequential and parallel LMS (Least Mean Squared) algorithm to calculate the slope.
  * The intercept can be calculated via sequential LMS, sequential Gradient Descent, or a custom parallel Stochastic Gradient Descent.
- * 
- * @author Neel Drain
- * @version 0.2
- * @since 2019-04-20
- */ 
+ * </br></br>
+ * <h4> Usage </h4>
+*Import datasets x values and y values as Double[] : Double[] x,y
+*</br>
+*Create a new LinearRegression class : LinearRegression lr = new LinearRegression(x,y)
+*</br>
+*Choose a 'fit option' : simpleFit() calculates  using sequential LMS for slope and intercept
+*</br>
+*			simpleFit(false) same as simpleFit()
+*</br>
+*			simpleFit(true) calculates using parallel LMS for slope, sequential LMS for intercept
+*</br>
+*			gradientFit(false) calculates using sequential LMS for slope, sequential Gradient Descent for intercept
+*</br>
+*			gradientFit(true) calculates using parallel LMS for slope, parallel GradientDescent for intercept
+*</br>
+*Get slope : getSlope() returns Double
+*</br>
+*Get intercept : getIntercept() returns Double
+*</br>
+*Get estimated y value at user-specified x value : getEstimatedValue(xValue) returns Double
+* 
+* @author Neel Drain
+* @version 0.2
+* @since 2019-04-20
+*/ 
 public class LinearRegression {
 
 	/**
@@ -131,7 +152,9 @@ public class LinearRegression {
 		if(x.length != y.length) throw new IllegalStateException("Size of input x != size of input y");
 		//Global Assignments
 		this.x = x;
+		this.xRef = new AtomicReference<Double[]>(this.x);
 		this.y = y;
+		this.yRef = new AtomicReference<Double[]>(this.y);
 		slope = new Double(0.0);
 		intercept = new Double(0.0);
 		xMean = Arrays.asList(x).stream().mapToDouble(val -> val).average().orElse(0.0);
@@ -197,7 +220,7 @@ public class LinearRegression {
 	 * @throws ExecutionException
 	 */
 	private void parallelSlopeEstimator() throws InterruptedException, ExecutionException {
-		op.print(OptionalPrinter.HIGH_PRIORITY,"Running parallel slope estimator with");
+		op.print(OptionalPrinter.HIGH_PRIORITY,"Running parallel slope estimator");
 		CountDownLatch countDownLatch = new CountDownLatch(threadCount);
 		AtomicReference<CountDownLatch> countDownLatchRef = new AtomicReference<CountDownLatch>(countDownLatch);
 		ExecutorService pool = Executors.newFixedThreadPool(threadCount);
@@ -213,7 +236,7 @@ public class LinearRegression {
 		double numerator = 0;
 		double denominator = 0;
 		countDownLatchRef.get().await();
-		op.print(OptionalPrinter.DEBUG,"slopeThreads finished execution");
+		op.print(OptionalPrinter.HIGH_PRIORITY,"slopeThreads finished execution");
 		Thread.sleep(5);
 		for(Future<Double[]> sums : futures) {
 			numerator += sums.get()[0];
@@ -253,7 +276,7 @@ public class LinearRegression {
 	 * @throws ExecutionException
 	 */
 	private void parallelGradientInterceptEstimator() throws InterruptedException, ExecutionException {
-		op.print(OptionalPrinter.HIGH_PRIORITY,"Running parallel gradient descent estimator v1 with");
+		op.print(OptionalPrinter.HIGH_PRIORITY,"Running parallel gradient descent estimator with");
 		double learningRate = 0.001;
 		double stepSize = 0;
 		double gIntercept = INITIAL_INTERCEPT;
@@ -351,9 +374,10 @@ public class LinearRegression {
 	/**
 	 * Gets the estimated value of data at xValue using the previously calculated {@link #slope} and {@link #intercept}.
 	 * @param xValue is the value to estimate at
-	 * @return the estimated value (y-value)
+	 * @return the estimated value (y-value), null if one or neither has been calculated yet.
 	 */
 	public Double getEstimatedValue(Double xValue) {
+		if(intercept == null || slope == null) return null;
 		return intercept + xValue * slope;
 	}
 	
@@ -375,7 +399,7 @@ public class LinearRegression {
 
 	/**
 	 * Getter for {@linkplain #intercept}
-	 * @return the value of {@link #intercept} as a {@link java.lang.Double}.
+	 * @return the value of {@link #intercept} as a {@link java.lang.Double}, , possible to return null.
 	 */
 	public Double getIntercept() {
 		return intercept;
@@ -383,7 +407,7 @@ public class LinearRegression {
 
 	/**
 	 * Getter for {@linkplain #slope}
-	 * @return the value of {@link #slope} as a {@link java.lang.Double}.
+	 * @return the value of {@link #slope} as a {@link java.lang.Double}, possible to return null.
 	 */
 	public Double getSlope() {
 		return slope;

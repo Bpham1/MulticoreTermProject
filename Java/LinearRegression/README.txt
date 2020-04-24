@@ -14,6 +14,9 @@ optimized.threadutils : The utils package containing
 optimized.utils : The utils package containing
 			Optionalprinter.java : a System.out.println wrapper with added user-specified verbosity
 
+tests : the package containing tests
+	SimpleTests : Tests sequential and parallel algorithims with a data size of 3 within 3 decimal points
+
 regression (NON PRODUCTION) :  The development version of the Linear Regression calculator
 utilities (NON PRODUCTION) : The development version of the utils packages
 

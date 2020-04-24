@@ -18,7 +18,7 @@ public class ThreadInfo {
 	 */
 	public static int threadCount(int dataSize) {
 		int availProcs = Runtime.getRuntime().availableProcessors();
-		return (dataSize / availProcs == 0) ? 1 : availProcs;
+		return (dataSize / availProcs == 0) ? 1 : availProcs; 
 	}
 	
 	/**
