@@ -5,7 +5,7 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class DescisionTreeEstimator implements Estimator{
+public class DescisionTreeEstimator implements NewEstimator{
     int n_jobs;
     double threshold;
     int feature_idx;
@@ -102,28 +102,28 @@ public class DescisionTreeEstimator implements Estimator{
         List<List<Double>> currentX;
         List<Integer> currentY;
         while(treePool.size() != 0){
-            double highestGain = -1;
+            Double highestGain = null;
             double bestThreshold = -1;
             int bestFeature = -1;
 
-            System.out.println("Getting Current Tree");
-            System.out.println("Tree Pool Size: " + treePool.size());
-            System.out.println("Removing 1 tree");
+            //System.out.println("Getting Current Tree");
+            //System.out.println("Tree Pool Size: " + treePool.size());
+            //System.out.println("Removing 1 tree");
             currentTree = treePool.remove(0);
             currentX = XInputs.remove(0);
             currentY = YInputs.remove(0);
 
             currentTree.classCount = getClassCount(currentY);
-            currentTree.impurity = getImpurity(currentTree.classCount);
+            currentTree.impurity = getImpurity(currentTree.classCount, currentX.size());
 
             //System.out.println("Impurity: " + currentTree.impurity);
 
             if(currentTree.classCount.keySet().size() == 1){
-                System.out.println("Only one class");
+                //System.out.println("Only one class");
                 currentTree.classifiers = new ArrayList<Integer>();
                 currentTree.classifiers.addAll(currentTree.classCount.keySet());
             } else {
-                System.out.println("More than one class");
+                //System.out.println("More than one class");
                 idx_stream = IntStream.range(0, currentX.size());
                 rowIdxs = idx_stream.boxed().collect(Collectors.toList());
 
@@ -157,19 +157,25 @@ public class DescisionTreeEstimator implements Estimator{
                     } catch (InterruptedException | ExecutionException e) {
                         e.printStackTrace();
                     }
-                    if (feat_thresh_pair.gain > highestGain) {
+                    if (highestGain == null || feat_thresh_pair.gain > highestGain) {
                         highestGain = feat_thresh_pair.gain;
                         bestThreshold = feat_thresh_pair.threshold;
                         bestFeature = feat_thresh_pair.feature;
                     }
                 }
                 executor.shutdown();
-                System.out.println("Highest Gain: " + highestGain);
-                System.out.println("Best Threshold: " + bestThreshold);
-                System.out.println("Best Feature: " + bestFeature);
+                //System.out.println("Highest Gain: " + highestGain);
+                //System.out.println("Best Threshold: " + bestThreshold);
+                //System.out.println("Best Feature: " + bestFeature);
                 currentTree.feature_idx = bestFeature;
                 currentTree.threshold = bestThreshold;
-                splitTree(currentX, currentY, bestFeature, bestThreshold, currentTree);
+
+                if(highestGain != null && highestGain > 0.0){
+                    splitTree(currentX, currentY, bestFeature, bestThreshold, currentTree);
+                } else {
+                    currentTree.classifiers = new ArrayList<Integer>();
+                    currentTree.classifiers.addAll(currentTree.classCount.keySet());
+                }
             }
         }
     }
@@ -182,7 +188,8 @@ public class DescisionTreeEstimator implements Estimator{
         List<Integer> greaterY = new ArrayList<Integer>();
 
         for(int i = 0; i < splitX.size(); i++){
-            System.out.println("Value: " + splitX.get(i).get(feature_idx) + "; Threshold: " + threshold);
+            //System.out.println("Value: " + splitX.get(i).get(feature_idx) + "; Threshold: " + threshold);
+
             if(splitX.get(i).get(feature_idx) >= threshold){
                 greaterX.add(splitX.get(i));
                 greaterY.add(splitY.get(i));
@@ -195,7 +202,7 @@ public class DescisionTreeEstimator implements Estimator{
         if(greaterX.size() != 0 && lessX.size() != 0){
             currentTree.greaterTree = new DescisionTreeEstimator(n_jobs, feature_set);
             currentTree.lessTree = new DescisionTreeEstimator(n_jobs, feature_set);
-            System.out.println("Adding 2 trees");
+            //System.out.println("Adding 2 trees");
             treePool.add(currentTree.greaterTree);
             XInputs.add(greaterX);
             YInputs.add(greaterY);
@@ -203,7 +210,7 @@ public class DescisionTreeEstimator implements Estimator{
             XInputs.add(lessX);
             YInputs.add(lessY);
         } else {
-            System.out.println("Special case");
+            //System.out.println("Special case");
 
             // Special case: identical features, but different classification
             currentTree.classifiers = new ArrayList<Integer>();
@@ -214,7 +221,6 @@ public class DescisionTreeEstimator implements Estimator{
     //O(NlogN) - slowish, but difficult to parallelize
     @Override
     public List<Integer> predict(List X) {
-        List<List<Double>> castedX = X;
         List<Integer> predictions = new ArrayList<Integer>();
         if(classifiers.size() != 0){
             for(int i = 0; i < X.size(); i++){
@@ -223,20 +229,29 @@ public class DescisionTreeEstimator implements Estimator{
             }
         } else {
             for(int i = 0; i < X.size(); i++){
-                if(castedX.get(i).get(feature_idx) > threshold){
-                    // O(logN)
-                    predictions.add(greaterTree.predict(castedX.get(i)).get(0));
-                } else {
-                    // O(logN)
-                    predictions.add(lessTree.predict(castedX.get(i)).get(0));
-                }
+                predictions.add(predictHelper(((List<List<Double>>) X).get(i)));
             }
         }
         return predictions;
     }
 
+    private Integer predictHelper(List<Double> X){
+        if(classifiers.size() != 0){
+            int randomClass = r.nextInt(classifiers.size());
+            return classifiers.get(randomClass);
+        } else {
+            if(X.get(feature_idx) >= threshold){
+                // O(logN)
+                return greaterTree.predictHelper(X);
+            } else {
+                // O(logN)
+                return lessTree.predictHelper(X);
+            }
+        }
+    }
+
     @Override
-    public Estimator copy() {
+    public NewEstimator copy() {
         return new DescisionTreeEstimator(n_jobs, threshold,feature_idx, classifiers, impurity, classCount, X, Y,
                 feature_set, lessTree, greaterTree);
     }
@@ -274,7 +289,7 @@ public class DescisionTreeEstimator implements Estimator{
 
         @Override
         public FeatThreshPair call() throws Exception {
-            double highestGain = 0;
+            Double highestGain = null;
             int bestFeatureIdx = -1;
             double bestThreshold = -1;
 
@@ -284,33 +299,42 @@ public class DescisionTreeEstimator implements Estimator{
                 for(int i = 0; i < feature_set.size(); i++){
                     List<Double> row = testX.get(rowIdx);
                     double threshold = row.get(i);
-                    //System.out.println("Feature: " + i + "; Threshold: " + threshold);
+                    //System.out.println("Feature: " + i + "; Threshold: " + threshold + " ############");
                     // Split rows into groups based on threshold
+                    int numLess = 0;
+                    int numGreater = 0;
                     for(int j = 0; j < testX.size(); j++){
-                        //System.out.println("Value: " + testX.get(j).get(feature_idx));
+                        System.out.println("Value: " + testX.get(j).get(i) + "; Threshold: " + threshold);
                         if(testX.get(j).get(i) >= threshold){
                             //System.out.println("Adding row " + j + " to greater group");
                             if(!testGreaterCount.containsKey(testY.get(j))){
                                 testGreaterCount.put(testY.get(j), 0);
                             }
                             testGreaterCount.put(testY.get(j), testGreaterCount.get(testY.get(j)) + 1);
+                            numGreater++;
                         } else {
                             //System.out.println("Adding row " + j + " to less group");
                             if(!testLessCount.containsKey(testY.get(j))){
                                 testLessCount.put(testY.get(j), 0);
                             }
                             testLessCount.put(testY.get(j), testLessCount.get(testY.get(j)) + 1);
+                            numLess++;
                         }
                     }
                     double avgImpurity;
-                    // Calculate avgerage impurity (no gain if
+                    // Calculate avgerage impurity
                     if(testLessCount.keySet().size() == 0 || testGreaterCount.keySet().size() == 0){
+                        if(testLessCount.keySet().size() == 0){
+                            //System.out.println("Test Less Count Empty");
+                        } else {
+                            //System.out.println("Test Greater Count Empty");
+                        }
                         avgImpurity = 1.0;
                     } else {
                         // Get impurity for each group
-                        double lessImpurity = getImpurity(testLessCount);
+                        double lessImpurity = getImpurity(testLessCount, numLess);
                         //System.out.println("Less Impurity: " + lessImpurity +  "; Size: " + testLessCount.keySet().size());
-                        double greaterImpurity = getImpurity(testGreaterCount);
+                        double greaterImpurity = getImpurity(testGreaterCount, numGreater);
                         //System.out.println("Greater Impurity: " + greaterImpurity +  "; Size: " + testGreaterCount.keySet().size());
 
                         avgImpurity = ((double) testLessCount.size() / (double) testX.size()) * lessImpurity
@@ -320,7 +344,7 @@ public class DescisionTreeEstimator implements Estimator{
                     double gain = testImpurity - avgImpurity;
                     //System.out.println("Gain: " + gain);
 
-                    if(gain > highestGain){
+                    if(highestGain == null || gain > highestGain){
                         //System.out.println("New Highest Gain: " + gain);
                         //System.out.println("New Best Feature: " + i);
                         //System.out.println("New Best Threshold: " + threshold);
@@ -332,9 +356,12 @@ public class DescisionTreeEstimator implements Estimator{
                     testGreaterCount.clear();
                 }
             }
-            //System.out.println("bestFeatureIdx: " + bestFeatureIdx);
-            //System.out.println("bestThreshold: " + bestThreshold);
-            //System.out.println("highestGain: " + highestGain);
+            if(highestGain == null){
+                highestGain = -1.0;
+            }
+            System.out.println("bestFeatureIdx: " + bestFeatureIdx);
+            System.out.println("bestThreshold: " + bestThreshold);
+            System.out.println("highestGain: " + highestGain);
             return new FeatThreshPair(bestFeatureIdx, bestThreshold, highestGain);
         }
     }
@@ -354,13 +381,14 @@ public class DescisionTreeEstimator implements Estimator{
 
     // O(C)
     // C - # of unique labels
-    double getImpurity(HashMap<Integer, Integer> classCount){
+    double getImpurity(HashMap<Integer, Integer> classCount, int numRows){
         double impurity = 1;
         if(classCount.keySet().size() == 1){
             return 0.0;
         }
         for(Integer key: classCount.keySet()){
-            double prob = (double) classCount.get(key) / (double) classCount.keySet().size();
+            double prob = (double) classCount.get(key) / (double) numRows;
+            //System.out.println("Prob: " + prob);
             impurity -= Math.pow(prob, 2);
         }
         return impurity;

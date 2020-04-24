@@ -2,12 +2,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class RandomForest implements Estimator{
+public class RandomForest{
     int n_estimators;
     int n_jobs;
-    List<Estimator> estimators;
-    List<List> train_datas;
-    List<List> labels;
+    List<NewEstimator> estimators;
+    List<List<List<Double>>> train_datas;
+    List<List<Integer>> labels;
     List<List<Integer>> feature_subsets;
     Random r;
 
@@ -15,26 +15,28 @@ public class RandomForest implements Estimator{
         this.n_estimators = n_estimators;
         this.n_jobs = n_jobs;
         this.r = new Random();
-        this.estimators = new ArrayList<Estimator>();
+        this.estimators = new ArrayList<NewEstimator>();
+        this.train_datas = new ArrayList<List<List<Double>>>();
     }
 
-    private RandomForest(int n_jobs, List<Estimator> estimators){
+    private RandomForest(int n_jobs, List<NewEstimator> estimators){
         this.n_estimators = estimators.size();
         this.n_jobs = n_jobs;
         this.r = new Random();
-        this.estimators = new ArrayList<Estimator>();
+        this.estimators = new ArrayList<NewEstimator>();
         for(int i = 0; i < n_estimators; i++){
             estimators.add(estimators.get(i).copy());
         }
+        this.train_datas = new ArrayList<List<List<Double>>>();
     }
 
-    @Override
-    public void fit(List X, List Y) {
+    public void fit(List<List<Double>> X, List<Integer> Y) {
         // Create bootstraps
         int randomNum;
+
         for(int i = 0; i < n_estimators; i++){
-            List train_data = new ArrayList();
-            List label = new ArrayList();
+            List<List<Double>> train_data = new ArrayList<List<Double>>();
+            List<Integer> label = new ArrayList<Integer>();
             for(int j = 0; j < X.size(); j++){
                 randomNum = r.nextInt(X.size()-1) + 1;
                 train_data.add(X.get(j));
@@ -45,26 +47,17 @@ public class RandomForest implements Estimator{
         }
 
         // Create feature subset
-        if(X.get(0) instanceof Double || X.get(0) instanceof Float || X.get(0) instanceof Integer){
-            for(int i = 0; i < n_estimators; i++){
-                List<Integer> feature_subset = new ArrayList<Integer>();
-                feature_subset.add(0);
-                feature_subsets.add(feature_subset);
-            }
-        } else if (X.get(0) instanceof List) {
-            for(int i = 0; i < n_estimators; i++){
-                List temp = (List) X.get(0);
-                int size = temp.size();
+        for(int i = 0; i < n_estimators; i++){
+            int size = X.get(0).size();
 
-                IntStream idx_stream = IntStream.range(0, size);
-                List<Integer> idxs = idx_stream.boxed().collect(Collectors.toList());
-                Collections.shuffle(idxs);
+            IntStream idx_stream = IntStream.range(0, size);
+            List<Integer> idxs = idx_stream.boxed().collect(Collectors.toList());
+            Collections.shuffle(idxs);
 
-                randomNum = r.nextInt(size - 1) + 1;
+            randomNum = r.nextInt(size - 1) + 1;
 
-                List<Integer> feature_subset = idxs.subList(0, randomNum);
-                feature_subsets.add(feature_subset);
-            }
+            List<Integer> feature_subset = idxs.subList(0, randomNum);
+            feature_subsets.add(feature_subset);
         }
 
         for(int i = 0; i < n_estimators; i++){
@@ -73,10 +66,9 @@ public class RandomForest implements Estimator{
         }
     }
 
-    @Override
-    public List<Integer> predict(List X) {
+    public List<Integer> predict(List<List<Double>> X) {
         List<List<Integer>> preds = new ArrayList<List<Integer>>();
-        for(Estimator est: estimators){
+        for(NewEstimator est: estimators){
             preds.add(est.predict(X));
         }
         List<Integer> final_pred = new ArrayList<Integer>();
@@ -99,10 +91,5 @@ public class RandomForest implements Estimator{
             final_pred.add(greatestPred);
         }
         return final_pred;
-    }
-
-    @Override
-    public Estimator copy() {
-        return new RandomForest(n_jobs, estimators);
     }
 }
