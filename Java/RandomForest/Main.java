@@ -7,7 +7,7 @@ import java.util.Random;
 public class Main {
     public static void main(String[] args){
         CSVReaderWriter csvreadwrter = new CSVReaderWriter();
-        System.out.println(csvreadwrter.read("C:\\Users\\brand\\IdeaProjects\\TermProject\\src\\SampleInput.csv"));
+        System.out.println(csvreadwrter.read("SampleInput.csv"));
         List<Integer> labels = csvreadwrter.getColumnAsInt("Y");
         List<List<Double>> data = csvreadwrter.getColumnRangeAsDouble("Feat 1", "Feat 3");
         for(Integer label: labels){
