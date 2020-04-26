@@ -17,6 +17,11 @@ public class OptionalPrinter {
 	public int VERBOSITY = 1;
 	
 	/**
+	 * Wrapper int for level 0 verbosity, used to ensure no print output
+	 */
+	public static final int NONE = 0;
+	
+	/**
 	 * Wrapper int for level 1 verbosity, used to help organization.
 	 */
 	public static final int HIGH_PRIORITY = 1;
@@ -33,6 +38,14 @@ public class OptionalPrinter {
 	 * @param verbosity is the level to set {@linkplain #VERBOSITY} to.
 	 */
 	public OptionalPrinter(int verbosity) {
+		VERBOSITY = verbosity;
+	}
+	
+	/**
+	 * Setter for {@link #VERBOSITY}
+	 * @param verbosity is the new verbosity level
+	 */
+	public void setVerbosity(int verbosity) {
 		VERBOSITY = verbosity;
 	}
 	

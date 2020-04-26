@@ -132,7 +132,7 @@ public class LinearRegression {
 	/**
 	 * The OptionalPrinter which allows for controlling what messages print via a determined VERBOSITY level.
 	 */
-	private OptionalPrinter op;
+	public OptionalPrinter op;
 	
 	/**
 	 * The main constructor. Takes in a pair of {@link java.lang.Double} arrays.
@@ -369,6 +369,24 @@ public class LinearRegression {
 			sum += -2*(y[index] - (gIntercept + slope * x[index]));
 		}
 		return sum;
+	}
+	
+	/**
+	 * Calculated the standard (average) error between the predicted and observed data.
+	 * Since the standard error calculation comprises simple 2-step sub-calculations parallelerization time would be equivalent to sequential time.
+	 * Therefore this method is fully sequential.
+	 * @return the standard error of the prediction.
+	 */
+	public Double calcualteStandardError() {
+		Double standardError = new Double(0.0);
+		double[] errors = new double[x.length];
+		for(int estimationIndex = 0; estimationIndex < x.length; estimationIndex++) {
+			//Simple difference error TODO use different error calculation types especially those that can normalize 
+			errors[estimationIndex] = Math.abs(y[estimationIndex] - getEstimatedValue(x[estimationIndex]));
+		}
+		double sum = Arrays.stream(errors).parallel().sum();
+		standardError = sum / x.length;
+		return standardError;
 	}
 	
 	/**
