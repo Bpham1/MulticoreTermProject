@@ -2,14 +2,14 @@ import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class RandomForest{
-    int n_estimators;
-    int n_jobs;
-    List<NewEstimator> estimators;
-    List<List<List<Double>>> train_datas;
-    List<List<Integer>> labels;
-    List<List<Integer>> feature_subsets;
-    Random r;
+public class RandomForest implements NewEstimator{
+    private int n_estimators;
+    private int n_jobs;
+    private List<NewEstimator> estimators;
+    private List<List<List<Double>>> train_datas;
+    private List<List<Integer>> labels;
+    private List<List<Integer>> feature_subsets;
+    private Random r;
 
     public RandomForest(int n_estimators, int n_jobs){
         this.n_estimators = n_estimators;
@@ -30,7 +30,10 @@ public class RandomForest{
         this.train_datas = new ArrayList<List<List<Double>>>();
     }
 
+    @Override
     public void fit(List<List<Double>> X, List<Integer> Y) {
+        labels = new ArrayList<List<Integer>>();
+        feature_subsets = new ArrayList<List<Integer>>();
         // Create bootstraps
         int randomNum;
 
@@ -39,8 +42,8 @@ public class RandomForest{
             List<Integer> label = new ArrayList<Integer>();
             for(int j = 0; j < X.size(); j++){
                 randomNum = r.nextInt(X.size()-1) + 1;
-                train_data.add(X.get(j));
-                label.add(Y.get(j));
+                train_data.add(X.get(randomNum));
+                label.add(Y.get(randomNum));
             }
             train_datas.add(train_data);
             labels.add(label);
@@ -61,11 +64,12 @@ public class RandomForest{
         }
 
         for(int i = 0; i < n_estimators; i++){
-            estimators.add(new DescisionTreeEstimator(1, feature_subsets.get(i)));
+            estimators.add(new DescisionTreeEstimator(n_jobs, feature_subsets.get(i)));
             estimators.get(i).fit(train_datas.get(i), labels.get(i));
         }
     }
 
+    @Override
     public List<Integer> predict(List<List<Double>> X) {
         List<List<Integer>> preds = new ArrayList<List<Integer>>();
         for(NewEstimator est: estimators){
@@ -91,5 +95,10 @@ public class RandomForest{
             final_pred.add(greatestPred);
         }
         return final_pred;
+    }
+
+    @Override
+    public NewEstimator copy(){
+        return null;
     }
 }

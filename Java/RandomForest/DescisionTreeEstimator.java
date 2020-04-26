@@ -1,23 +1,21 @@
-import java.lang.reflect.Array;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class DescisionTreeEstimator implements NewEstimator{
-    int n_jobs;
-    double threshold;
-    int feature_idx;
-    List<Integer> classifiers;
-    double impurity;
-    HashMap<Integer, Integer> classCount;
-    List<List<Double>> X;
-    List<Integer> Y;
-    List<Integer> feature_set;
-    DescisionTreeEstimator lessTree;
-    DescisionTreeEstimator greaterTree;
-    Random r;
+    private int n_jobs;
+    private double threshold;
+    private int feature_idx;
+    private List<Integer> classifiers;
+    private double impurity;
+    private HashMap<Integer, Integer> classCount;
+    private List<List<Double>> X;
+    private List<Integer> Y;
+    private List<Integer> feature_set;
+    private DescisionTreeEstimator lessTree;
+    private DescisionTreeEstimator greaterTree;
+    private Random r;
     private List<DescisionTreeEstimator> treePool;
     private List<List<List<Double>>> XInputs;
     private List<List<Integer>> YInputs;
@@ -80,7 +78,7 @@ public class DescisionTreeEstimator implements NewEstimator{
 
     // O(N^2 F) - slow, should be parallelized
     @Override
-    public void fit(List X, List Y) {
+    public void fit(List<List<Double>> X, List<Integer> Y) {
         this.X = X;
         this.Y = Y;
         XInputs.add(X);
@@ -220,7 +218,7 @@ public class DescisionTreeEstimator implements NewEstimator{
 
     //O(NlogN) - slowish, but difficult to parallelize
     @Override
-    public List<Integer> predict(List X) {
+    public List<Integer> predict(List<List<Double>> X) {
         List<Integer> predictions = new ArrayList<Integer>();
         if(classifiers.size() != 0){
             for(int i = 0; i < X.size(); i++){
@@ -228,8 +226,8 @@ public class DescisionTreeEstimator implements NewEstimator{
                 predictions.add(classifiers.get(randomClass));
             }
         } else {
-            for(int i = 0; i < X.size(); i++){
-                predictions.add(predictHelper(((List<List<Double>>) X).get(i)));
+            for (List<Double> x : X) {
+                predictions.add(predictHelper(x));
             }
         }
         return predictions;
@@ -304,7 +302,7 @@ public class DescisionTreeEstimator implements NewEstimator{
                     int numLess = 0;
                     int numGreater = 0;
                     for(int j = 0; j < testX.size(); j++){
-                        System.out.println("Value: " + testX.get(j).get(i) + "; Threshold: " + threshold);
+                        //System.out.println("Value: " + testX.get(j).get(i) + "; Threshold: " + threshold);
                         if(testX.get(j).get(i) >= threshold){
                             //System.out.println("Adding row " + j + " to greater group");
                             if(!testGreaterCount.containsKey(testY.get(j))){
@@ -359,9 +357,9 @@ public class DescisionTreeEstimator implements NewEstimator{
             if(highestGain == null){
                 highestGain = -1.0;
             }
-            System.out.println("bestFeatureIdx: " + bestFeatureIdx);
-            System.out.println("bestThreshold: " + bestThreshold);
-            System.out.println("highestGain: " + highestGain);
+            //System.out.println("bestFeatureIdx: " + bestFeatureIdx);
+            //System.out.println("bestThreshold: " + bestThreshold);
+            //System.out.println("highestGain: " + highestGain);
             return new FeatThreshPair(bestFeatureIdx, bestThreshold, highestGain);
         }
     }
