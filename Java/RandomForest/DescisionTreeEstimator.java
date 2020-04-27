@@ -15,7 +15,6 @@ public class DescisionTreeEstimator implements NewEstimator{
     private List<Integer> feature_set;
     private DescisionTreeEstimator lessTree;
     private DescisionTreeEstimator greaterTree;
-    private Random r;
     private List<DescisionTreeEstimator> treePool;
     private List<List<List<Double>>> XInputs;
     private List<List<Integer>> YInputs;
@@ -27,8 +26,6 @@ public class DescisionTreeEstimator implements NewEstimator{
         this.feature_set = null;
         this.lessTree = null;
         this.greaterTree = null;
-        this.classifiers = new ArrayList<Integer>();
-        this.r = new Random();
         this.treePool = new ArrayList<DescisionTreeEstimator>();
         this.XInputs = new ArrayList<List<List<Double>>>();
         this.YInputs = new ArrayList<List<Integer>>();
@@ -42,7 +39,6 @@ public class DescisionTreeEstimator implements NewEstimator{
         this.lessTree = null;
         this.greaterTree = null;
         this.classifiers = new ArrayList<Integer>();
-        this.r = new Random();
         this.treePool = new ArrayList<DescisionTreeEstimator>();
         this.XInputs = new ArrayList<List<List<Double>>>();
         this.YInputs = new ArrayList<List<Integer>>();
@@ -216,26 +212,95 @@ public class DescisionTreeEstimator implements NewEstimator{
         }
     }
 
+    public class predictHelperRunnable implements Runnable{
+        int start;
+        int end;
+        List<List<Double>> X;
+        DescisionTreeEstimator root;
+        List<Integer> pred;
+
+        public predictHelperRunnable(int start, int end, List<List<Double>> X, DescisionTreeEstimator root, List<Integer> predictions){
+            this.start = start;
+            this.end = end;
+            this.X = X;
+            this.root = root;
+            this.pred = predictions;
+        }
+
+        @Override
+        public void run() {
+            for(int i = start; i < end; i++){
+                DescisionTreeEstimator current = root;
+                while(pred.get(i) == -1){
+                    if(current.classifiers != null && current.classifiers.size() > 0){
+                        int randomClass = ThreadLocalRandom.current().nextInt(current.classifiers.size());
+                        pred.set(i, current.classifiers.get(randomClass));
+                    } else {
+                        if(this.X.get(i).get(current.feature_idx) >= current.threshold){
+                            // O(logN)
+                            current = current.greaterTree;
+                        } else {
+                            // O(logN)
+                            current = current.lessTree;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     //O(NlogN) - slowish, but difficult to parallelize
     @Override
     public List<Integer> predict(List<List<Double>> X) {
         List<Integer> predictions = new ArrayList<Integer>();
-        if(classifiers.size() != 0){
+        for(int i = 0; i < X.size(); i++){
+            predictions.add(-1);
+        }
+
+        /*
+        if(classifiers != null && classifiers.size() != 0){
             for(int i = 0; i < X.size(); i++){
-                int randomClass = r.nextInt(classifiers.size());
-                predictions.add(classifiers.get(randomClass));
+                int randomClass = ThreadLocalRandom.current().nextInt(classifiers.size());
+                predictions.set(i, classifiers.get(randomClass));
             }
         } else {
-            for (List<Double> x : X) {
-                predictions.add(predictHelper(x));
+            for(int i = 0; i < X.size(); i++){
+                predictions.set(i, predictHelper(X.get(i)));
+            }
+        }*/
+        List<Thread> threads = new ArrayList<Thread>();
+        if(X.size() < n_jobs){
+            for(int i = 0; i < X.size(); i++){
+                Runnable rb = new predictHelperRunnable(i, i+1, X, this, predictions);
+                threads.add(new Thread(rb));
+                threads.get(i).start();
+            }
+        } else {
+            int threadSize = X.size()/n_jobs;
+            for(int i = 0; i < n_jobs; i++){
+                Runnable rb;
+                if(i == n_jobs-1){
+                    rb = new predictHelperRunnable(i*threadSize, (i+1)*threadSize, X, this, predictions);
+                } else {
+                    rb = new predictHelperRunnable(i*threadSize, X.size(), X, this, predictions);
+                }
+                threads.add(new Thread(rb));
+                threads.get(i).start();
+            }
+        }
+        for(Thread thread: threads){
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
         return predictions;
     }
 
     private Integer predictHelper(List<Double> X){
-        if(classifiers.size() != 0){
-            int randomClass = r.nextInt(classifiers.size());
+        if(classifiers != null && classifiers.size() != 0){
+            int randomClass = ThreadLocalRandom.current().nextInt(classifiers.size());
             return classifiers.get(randomClass);
         } else {
             if(X.get(feature_idx) >= threshold){
