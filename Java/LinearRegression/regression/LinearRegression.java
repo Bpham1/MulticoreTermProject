@@ -220,9 +220,9 @@ public class LinearRegression {
 	//Main method, used for testing purposes
 	public static void main(String[] args) throws InterruptedException, ExecutionException {
 		System.out.println("Starting Linear Regression");
-		Double[] xIn = {0.5,2.3,2.9};
-		Double[] yIn = {1.4,1.9,3.2};
-		boolean gradient = true;
+		Double[] xIn = {1.0,4.0,7.0,8.2,13.4};
+		Double[] yIn = {1.0,2.0,3.0,9.1,24.5};
+		boolean gradient = false;
 		boolean parallel = true;
 		LinearRegression lr = new LinearRegression(xIn,yIn);
 		System.out.println("Running fit with gradient: " + gradient + " parallel: " + parallel);
