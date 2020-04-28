@@ -1,4 +1,6 @@
+import java.lang.reflect.Array;
 import java.util.*;
+import java.util.stream.IntStream;
 
 public class KNearestNeightbors {
     public int k;
@@ -16,28 +18,41 @@ public class KNearestNeightbors {
     public List<Integer> predict(List<List<Double>> X) {
         List<Integer> y_pred = new ArrayList<Integer>();
         // Can do in parallel
-        for (List<Double> x : X) {
+//        for (List<Double> x : X) {
+//            y_pred.add(_predict(x));
+//        }
+
+        // Parallel
+        X.parallelStream().forEach((x)-> {
             y_pred.add(_predict(x));
-        }
+        });
+
         return y_pred;
     }
 
     private Integer _predict(List<Double> x) {
-        Neighbor[] neighbors = new Neighbor[x.size()];
+        Neighbor[] neighbors = new Neighbor[X_train.size()];
 
         // Can do in parallel
-        for (int i = 0; i < neighbors.length; i++) {
+//        for (int i = 0; i < neighbors.length; i++) {
+//            neighbors[i] = new Neighbor(distance(X_train.get(i), x), Y_train.get(i));
+//        }
+
+        // Parallel
+        IntStream.range(0, neighbors.length).parallel().forEach(i -> {
             neighbors[i] = new Neighbor(distance(X_train.get(i), x), Y_train.get(i));
-        }
+        });
+
+
         // Use Parallel sort
         Arrays.sort(neighbors);
 
         LinkedHashMap<Integer, Integer> votes = new LinkedHashMap<Integer, Integer>();
         for (int i = 0; i < k; i++) {
             Integer label = neighbors[i].label;
-            if (votes.containsValue(label))
+            if (votes.containsKey(label)) {
                 votes.put(label, votes.get(label) + 1);
-            else
+            } else
                 votes.put(label, 1);
         }
 
@@ -54,10 +69,19 @@ public class KNearestNeightbors {
 
     private Double distance(List<Double> x, List<Double> x_train) {
         double sum = 0;
+
         // Can do in parallel
-        for (int i = 0; i < x_train.size(); i++) {
-            sum += Math.pow((x.get(i) - x_train.get(i)), 2);
-        }
+//        for (int i = 0; i < x_train.size(); i++) {
+//            sum += Math.pow((x.get(i) - x_train.get(i)), 2);
+//        }
+
+        // Parallel
+        List<Double> parallelSum = new ArrayList<Double>();
+        IntStream.range(0, x_train.size()).forEach(i -> {
+            parallelSum.add(Math.pow((x.get(i) - x_train.get(i)), 2));
+        });
+        sum = parallelSum.parallelStream().reduce(0.0, Double::sum);
+
         return Math.sqrt(sum);
     }
 
