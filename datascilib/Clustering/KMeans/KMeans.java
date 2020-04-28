@@ -1,5 +1,6 @@
 package datascilib.Clustering.KMeans;
 
+import java.lang.management.ManagementFactory;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -26,7 +27,7 @@ public class KMeans {
     public KMeans(int n_cluster){
         this.max_iter = 300;
         this.n_clusters = n_cluster;
-        this.n_jobs = 1;
+        this.n_jobs = ManagementFactory.getThreadMXBean().getThreadCount();
     }
 
     public KMeans(int n_cluster, int n_jobs){

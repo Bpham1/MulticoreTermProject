@@ -3,6 +3,7 @@ package datascilib.Classifiers.RandomForest;
 import datascilib.Classifiers.DecisionTree.DescisionTreeEstimator;
 import datascilib.Classifiers.Intefaces.NewEstimator;
 
+import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -15,6 +16,14 @@ public class RandomForest implements NewEstimator {
     private List<List<Integer>> labels;
     private List<List<Integer>> feature_subsets;
     private Random r;
+
+    public RandomForest(int n_estimators){
+        this.n_estimators = n_estimators;
+        this.n_jobs = ManagementFactory.getThreadMXBean().getThreadCount();
+        this.r = new Random();
+        this.estimators = new ArrayList<NewEstimator>();
+        this.train_datas = new ArrayList<List<List<Double>>>();
+    }
 
     public RandomForest(int n_estimators, int n_jobs){
         this.n_estimators = n_estimators;

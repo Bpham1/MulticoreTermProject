@@ -2,6 +2,7 @@ package datascilib.Classifiers.DecisionTree;
 
 import datascilib.Classifiers.Intefaces.NewEstimator;
 
+import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -22,6 +23,18 @@ public class DescisionTreeEstimator implements NewEstimator {
     private List<DescisionTreeEstimator> treePool;
     private List<List<List<Double>>> XInputs;
     private List<List<Integer>> YInputs;
+
+    public DescisionTreeEstimator(){
+        this.n_jobs = ManagementFactory.getThreadMXBean().getThreadCount();
+        this.classCount = null;
+        this.impurity = 1.0;
+        this.feature_set = null;
+        this.lessTree = null;
+        this.greaterTree = null;
+        this.treePool = new ArrayList<DescisionTreeEstimator>();
+        this.XInputs = new ArrayList<List<List<Double>>>();
+        this.YInputs = new ArrayList<List<Integer>>();
+    }
 
     public DescisionTreeEstimator(int n_jobs){
         this.n_jobs = n_jobs;
