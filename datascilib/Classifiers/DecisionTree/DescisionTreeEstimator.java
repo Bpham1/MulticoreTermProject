@@ -1,9 +1,13 @@
+package datascilib.Classifiers.DecisionTree;
+
+import datascilib.Classifiers.Intefaces.NewEstimator;
+
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class DescisionTreeEstimator implements NewEstimator{
+public class DescisionTreeEstimator implements NewEstimator {
     private int n_jobs;
     private double threshold;
     private int feature_idx;

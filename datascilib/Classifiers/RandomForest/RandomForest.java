@@ -1,8 +1,13 @@
+package datascilib.Classifiers.RandomForest;
+
+import datascilib.Classifiers.DecisionTree.DescisionTreeEstimator;
+import datascilib.Classifiers.Intefaces.NewEstimator;
+
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class RandomForest implements NewEstimator{
+public class RandomForest implements NewEstimator {
     private int n_estimators;
     private int n_jobs;
     private List<NewEstimator> estimators;

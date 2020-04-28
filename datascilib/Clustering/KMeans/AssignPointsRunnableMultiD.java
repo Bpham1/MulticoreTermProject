@@ -1,3 +1,5 @@
+package datascilib.Clustering.KMeans;
+
 import java.util.List;
 
 public class AssignPointsRunnableMultiD implements Runnable {
