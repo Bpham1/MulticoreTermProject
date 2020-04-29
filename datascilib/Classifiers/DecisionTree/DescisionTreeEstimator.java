@@ -1,14 +1,12 @@
 package datascilib.Classifiers.DecisionTree;
 
-import datascilib.Classifiers.Intefaces.NewEstimator;
-
 import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class DescisionTreeEstimator implements NewEstimator {
+public class DescisionTreeEstimator{
     private int n_jobs;
     private double threshold;
     private int feature_idx;
@@ -78,19 +76,18 @@ public class DescisionTreeEstimator implements NewEstimator {
         this.Y = new ArrayList<Integer>(Y);
         this.feature_set = new ArrayList<Integer>(feature_set);
         if(lessTree != null){
-            this.lessTree = (DescisionTreeEstimator) lessTree.copy();
+            this.lessTree = lessTree.copy();
         } else {
             this.lessTree = null;
         }
         if(greaterTree != null){
-            this.greaterTree = (DescisionTreeEstimator) greaterTree.copy();
+            this.greaterTree = greaterTree.copy();
         } else {
             this.greaterTree = null;
         }
     }
 
     // O(N^2 F) - slow, should be parallelized
-    @Override
     public void fit(List<List<Double>> X, List<Integer> Y) {
         this.X = X;
         this.Y = Y;
@@ -267,7 +264,6 @@ public class DescisionTreeEstimator implements NewEstimator {
     }
 
     //O(NlogN) - slowish, but difficult to parallelize
-    @Override
     public List<Integer> predict(List<List<Double>> X) {
         List<Integer> predictions = new ArrayList<Integer>();
         for(int i = 0; i < X.size(); i++){
@@ -330,8 +326,7 @@ public class DescisionTreeEstimator implements NewEstimator {
         }
     }
 
-    @Override
-    public NewEstimator copy() {
+    public DescisionTreeEstimator copy() {
         return new DescisionTreeEstimator(n_jobs, threshold,feature_idx, classifiers, impurity, classCount, X, Y,
                 feature_set, lessTree, greaterTree);
     }

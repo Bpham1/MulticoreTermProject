@@ -1,17 +1,17 @@
 package datascilib.Classifiers.RandomForest;
 
 import datascilib.Classifiers.DecisionTree.DescisionTreeEstimator;
-import datascilib.Classifiers.Intefaces.NewEstimator;
 
 import java.lang.management.ManagementFactory;
+import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public class RandomForest implements NewEstimator {
+public class RandomForest{
     private int n_estimators;
     private int n_jobs;
-    private List<NewEstimator> estimators;
+    private List<DescisionTreeEstimator> estimators;
     private List<List<List<Double>>> train_datas;
     private List<List<Integer>> labels;
     private List<List<Integer>> feature_subsets;
@@ -21,7 +21,7 @@ public class RandomForest implements NewEstimator {
         this.n_estimators = n_estimators;
         this.n_jobs = ManagementFactory.getThreadMXBean().getThreadCount();
         this.r = new Random();
-        this.estimators = new ArrayList<NewEstimator>();
+        this.estimators = new ArrayList<DescisionTreeEstimator>();
         this.train_datas = new ArrayList<List<List<Double>>>();
     }
 
@@ -29,27 +29,26 @@ public class RandomForest implements NewEstimator {
         this.n_estimators = n_estimators;
         this.n_jobs = n_jobs;
         this.r = new Random();
-        this.estimators = new ArrayList<NewEstimator>();
+        this.estimators = new ArrayList<DescisionTreeEstimator>();
         this.train_datas = new ArrayList<List<List<Double>>>();
     }
 
-    private RandomForest(int n_jobs, List<NewEstimator> estimators){
+    private RandomForest(int n_jobs, List<DescisionTreeEstimator> estimators){
         this.n_estimators = estimators.size();
         this.n_jobs = n_jobs;
         this.r = new Random();
-        this.estimators = new ArrayList<NewEstimator>();
+        this.estimators = new ArrayList<DescisionTreeEstimator>();
         for(int i = 0; i < n_estimators; i++){
             estimators.add(estimators.get(i).copy());
         }
         this.train_datas = new ArrayList<List<List<Double>>>();
     }
 
-    @Override
     public void fit(List<List<Double>> X, List<Integer> Y) {
         labels = new ArrayList<List<Integer>>();
         feature_subsets = new ArrayList<List<Integer>>();
         train_datas = new ArrayList<List<List<Double>>>();
-        estimators = new ArrayList<NewEstimator>();
+        estimators = new ArrayList<DescisionTreeEstimator>();
 
         // Create bootstraps
         int randomNum;
@@ -86,10 +85,9 @@ public class RandomForest implements NewEstimator {
         }
     }
 
-    @Override
     public List<Integer> predict(List<List<Double>> X) {
         List<List<Integer>> preds = new ArrayList<List<Integer>>();
-        for(NewEstimator est: estimators){
+        for(DescisionTreeEstimator est: estimators){
             preds.add(est.predict(X));
         }
         List<Integer> final_pred = new ArrayList<Integer>();
@@ -114,8 +112,7 @@ public class RandomForest implements NewEstimator {
         return final_pred;
     }
 
-    @Override
-    public NewEstimator copy(){
+    public RandomForest copy(){
         return null;
     }
 }
