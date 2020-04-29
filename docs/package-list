@@ -1,0 +1,9 @@
+datascilib.Classifiers.DecisionTree
+datascilib.Classifiers.Intefaces
+datascilib.Classifiers.KNN
+datascilib.Classifiers.NaiveBayes
+datascilib.Classifiers.RandomForest
+datascilib.Clustering.KMeans
+datascilib.Regression.LinearRegression.regression
+datascilib.Regression.LinearRegression.utilities
+datascilib.Utils
