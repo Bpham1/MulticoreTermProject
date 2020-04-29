@@ -2,7 +2,9 @@
 Calcuates the slope and intercept of an estimated line-of-best fit for data seperated into x values and y values
 using Least Mean Squared (LMS) and/or a custom version of Gradient Descent with both sequential and parallel iterations.
 
-FOR FULL DESCRIPTIONS OF LIBRARY CLASSES, METHODS, VARIABLES PLEASE SEE THE JAVADOC AT /docs FOLDER IN THE MAIN GITHUB REPO. 
+FOR FULL DESCRIPTIONS OF LIBRARY CLASSES, METHODS, VARIABLES PLEASE SEE THE JAVADOC AT /docs FOLDER IN THE MAIN GITHUB REPO OR AT
+
+-------->   https://bpham1.github.io/MulticoreTermProject/   <----------
 
 FOR FOR FULL DESCRIPTIONS OF DEVELOPMENT VERSION PLEASE SEE JAVADOC AT https://aswanmordor.github.io/LinearRegression/
 WHICH DESCRIBES EACH NON-WRAPPER CLASS IN THE https://github.com/Bpham1/MulticoreTermProject /Java/LinearRegression FOLDER.
