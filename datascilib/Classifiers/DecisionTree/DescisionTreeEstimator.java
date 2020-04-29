@@ -35,6 +35,9 @@ public class DescisionTreeEstimator{
     }
 
     public DescisionTreeEstimator(int n_jobs){
+        if(n_jobs <= 0){
+            throw new IllegalArgumentException("n_jobs must be at least 1");
+        }
         this.n_jobs = n_jobs;
         this.classCount = null;
         this.impurity = 1.0;
@@ -47,6 +50,9 @@ public class DescisionTreeEstimator{
     }
 
     public DescisionTreeEstimator(int n_jobs, List<Integer> feature_set){
+        if(n_jobs <= 0){
+            throw new IllegalArgumentException("n_jobs must be at least 1");
+        }
         this.n_jobs = n_jobs;
         this.classCount = null;
         this.impurity = 1.0;
@@ -89,6 +95,16 @@ public class DescisionTreeEstimator{
 
     // O(N^2 F) - slow, should be parallelized
     public void fit(List<List<Double>> X, List<Integer> Y) {
+        if(X == null || Y == null || X.size() == 0 || Y.size() == 0){
+            throw new IllegalArgumentException("X and Y cannot be null or empty");
+        } else {
+            for(List<Double> x: X){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("Empty or null points added");
+                }
+            }
+        }
+
         this.X = X;
         this.Y = Y;
         XInputs.add(X);
@@ -265,6 +281,16 @@ public class DescisionTreeEstimator{
 
     //O(NlogN) - slowish, but difficult to parallelize
     public List<Integer> predict(List<List<Double>> X) {
+        if(X == null){
+            return null;
+        } else {
+            for(List<Double> x: X){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("X contains Empty or null points");
+                }
+            }
+        }
+
         List<Integer> predictions = new ArrayList<Integer>();
         for(int i = 0; i < X.size(); i++){
             predictions.add(-1);
@@ -363,7 +389,7 @@ public class DescisionTreeEstimator{
         }
 
         @Override
-        public FeatThreshPair call() throws Exception {
+        public FeatThreshPair call() {
             Double highestGain = null;
             int bestFeatureIdx = -1;
             double bestThreshold = -1;
@@ -443,7 +469,7 @@ public class DescisionTreeEstimator{
 
     // O(Y)
     // Y - length of labels
-    HashMap<Integer, Integer> getClassCount(List<Integer> labels){
+    private HashMap<Integer, Integer> getClassCount(List<Integer> labels){
         HashMap<Integer, Integer>  classCount = new HashMap<Integer, Integer> ();
         for (Integer label : (List<Integer>) labels) {
             if (!classCount.containsKey(label)) {
@@ -456,7 +482,7 @@ public class DescisionTreeEstimator{
 
     // O(C)
     // C - # of unique labels
-    double getImpurity(HashMap<Integer, Integer> classCount, int numRows){
+    private double getImpurity(HashMap<Integer, Integer> classCount, int numRows){
         double impurity = 1;
         if(classCount.keySet().size() == 1){
             return 0.0;

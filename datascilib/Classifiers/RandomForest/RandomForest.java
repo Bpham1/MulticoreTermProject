@@ -3,7 +3,6 @@ package datascilib.Classifiers.RandomForest;
 import datascilib.Classifiers.DecisionTree.DescisionTreeEstimator;
 
 import java.lang.management.ManagementFactory;
-import java.text.DecimalFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -13,11 +12,12 @@ public class RandomForest{
     private int n_jobs;
     private List<DescisionTreeEstimator> estimators;
     private List<List<List<Double>>> train_datas;
-    private List<List<Integer>> labels;
-    private List<List<Integer>> feature_subsets;
     private Random r;
 
     public RandomForest(int n_estimators){
+        if(n_estimators <= 0){
+            throw new IllegalArgumentException("Must have at least 1 estimator");
+        }
         this.n_estimators = n_estimators;
         this.n_jobs = ManagementFactory.getThreadMXBean().getThreadCount();
         this.r = new Random();
@@ -26,7 +26,13 @@ public class RandomForest{
     }
 
     public RandomForest(int n_estimators, int n_jobs){
+        if(n_estimators <= 0){
+            throw new IllegalArgumentException("Must have at least 1 estimator");
+        }
         this.n_estimators = n_estimators;
+        if(n_jobs <= 0){
+            throw new IllegalArgumentException("Must have at least 1 n_job");
+        }
         this.n_jobs = n_jobs;
         this.r = new Random();
         this.estimators = new ArrayList<DescisionTreeEstimator>();
@@ -45,8 +51,18 @@ public class RandomForest{
     }
 
     public void fit(List<List<Double>> X, List<Integer> Y) {
-        labels = new ArrayList<List<Integer>>();
-        feature_subsets = new ArrayList<List<Integer>>();
+        if(X == null || Y == null || X.size() == 0 || Y.size() == 0){
+            throw new IllegalArgumentException("X and Y cannot be null or empty");
+        } else {
+            for(List<Double> x: X){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("Empty or null points added");
+                }
+            }
+        }
+
+        List<List<Integer>> labels = new ArrayList<List<Integer>>();
+        List<List<Integer>> feature_subsets = new ArrayList<List<Integer>>();
         train_datas = new ArrayList<List<List<Double>>>();
         estimators = new ArrayList<DescisionTreeEstimator>();
 
@@ -57,7 +73,7 @@ public class RandomForest{
             List<List<Double>> train_data = new ArrayList<List<Double>>();
             List<Integer> label = new ArrayList<Integer>();
             for(int j = 0; j < X.size(); j++){
-                randomNum = r.nextInt(X.size()-1) + 1;
+                randomNum = r.nextInt(X.size());
                 train_data.add(X.get(randomNum));
                 label.add(Y.get(randomNum));
             }
@@ -73,7 +89,11 @@ public class RandomForest{
             List<Integer> idxs = idx_stream.boxed().collect(Collectors.toList());
             Collections.shuffle(idxs);
 
-            randomNum = r.nextInt(size - 1) + 1;
+            if(size == 1){
+                randomNum = 1;
+            } else {
+                randomNum = r.nextInt(size - 1) + 1;
+            }
 
             List<Integer> feature_subset = idxs.subList(0, randomNum);
             feature_subsets.add(feature_subset);
@@ -86,6 +106,16 @@ public class RandomForest{
     }
 
     public List<Integer> predict(List<List<Double>> X) {
+        if(X == null){
+            return null;
+        } else {
+            for(List<Double> x: X){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("X contains Empty or null points");
+                }
+            }
+        }
+
         List<List<Integer>> preds = new ArrayList<List<Integer>>();
         for(DescisionTreeEstimator est: estimators){
             preds.add(est.predict(X));
@@ -110,9 +140,5 @@ public class RandomForest{
             final_pred.add(greatestPred);
         }
         return final_pred;
-    }
-
-    public RandomForest copy(){
-        return null;
     }
 }

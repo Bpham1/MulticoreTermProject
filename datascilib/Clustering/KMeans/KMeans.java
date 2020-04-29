@@ -25,24 +25,52 @@ public class KMeans {
     // N - # of clusters
 
     public KMeans(int n_cluster){
+        if(n_cluster <= 0){
+            throw new IllegalArgumentException("n_cluster must be at least 1");
+        }
         this.max_iter = 300;
         this.n_clusters = n_cluster;
         this.n_jobs = ManagementFactory.getThreadMXBean().getThreadCount();
     }
 
     public KMeans(int n_cluster, int n_jobs){
+        if(n_cluster <= 0){
+            throw new IllegalArgumentException("n_cluster must be at least 1");
+        }
         this.max_iter = 300;
         this.n_clusters = n_cluster;
+        if(n_jobs <= 0){
+            throw new IllegalArgumentException("n_jobs must be at least 1");
+        }
         this.n_jobs = n_jobs;
     }
 
     public KMeans(int n_cluster, int max_iter, int n_jobs){
+        if(n_cluster <= 0){
+            throw new IllegalArgumentException("n_cluster must be at least 1");
+        }
+        if(max_iter <= 0){
+            throw new IllegalArgumentException("max_iter must be at least 1");
+        }
         this.max_iter = max_iter;
         this.n_clusters = n_cluster;
+        if(n_jobs <= 0){
+            throw new IllegalArgumentException("n_jobs must be at least 1");
+        }
         this.n_jobs = n_jobs;
     }
 
     public void fit(List<List<Double>> points){
+        if(points == null || points.size() == 0){
+            throw new IllegalArgumentException("points cannot be null or empty");
+        } else {
+            for(List<Double> x: points){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("Empty or null points added");
+                }
+            }
+        }
+
         this.points = points;
         this.prediction = new ArrayList<Integer>();
         this.centers = initCenters(n_clusters);
@@ -68,13 +96,24 @@ public class KMeans {
         List<List<Double>> temp = new ArrayList<List<Double>>(points);
         List<List<Double>> new_points = new ArrayList<List<Double>>();
         Collections.shuffle(temp);
-        // O(ND)
-        for(int i = 0; i < n_clusters; i++){
-            List<Double> temp2 = new ArrayList<Double>();
-            for(int j = 0; j < temp.get(i).size(); j++){
-                temp2.add(temp.get(i).get(j));
+
+        if(points.size() < n_clusters){
+            for(int i = 0; i < points.size(); i++){
+                List<Double> temp2 = new ArrayList<Double>();
+                for(int j = 0; j < temp.get(i).size(); j++){
+                    temp2.add(temp.get(i).get(j));
+                }
+                new_points.add(temp2);
             }
-            new_points.add(temp2);
+        } else {
+            // O(ND)
+            for(int i = 0; i < n_clusters; i++){
+                List<Double> temp2 = new ArrayList<Double>();
+                for(int j = 0; j < temp.get(i).size(); j++){
+                    temp2.add(temp.get(i).get(j));
+                }
+                new_points.add(temp2);
+            }
         }
         return new_points;
     }
@@ -165,7 +204,21 @@ public class KMeans {
     }
 
     public List<Integer> predict(List<List<Double>> new_points) {
-        prediction.clear();
+        if(new_points == null){
+            return null;
+        } else {
+            for(List<Double> x: new_points){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("new_points contains Empty or null points");
+                }
+            }
+        }
+
+        if(prediction != null){
+            prediction.clear();
+        } else {
+            prediction = new ArrayList<Integer>();
+        }
         for(int i = 0; i < new_points.size(); i++){
             prediction.add(-1);
         }

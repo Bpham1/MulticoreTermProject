@@ -3,7 +3,6 @@ package datascilib.Regression.LinearRegression.regression;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -223,13 +222,21 @@ public class LinearRegression {
 		op.print(OptionalPrinter.HIGH_PRIORITY,"Running parallel slope estimator");
 		ExecutorService pool = Executors.newFixedThreadPool(threadCount);
 		List<Future<Double[]>> futures = new ArrayList<Future<Double[]>>();
-		for(int i = 0; i < threadCount; i++) {
-			int start = i * (x.length/threadCount);
-			int end = (i+1) * (x.length/threadCount) - 1;
-			if(i == threadCount -1 && remainder != x.length) end += remainder;
-			slopeThread t = new slopeThread(start, end, x, y, xMean, yMean);
-			Future<Double[]> sums = pool.submit(t);
-			futures.add(sums);
+		if(x.length < threadCount){
+			for(int i = 0; i < x.length; i++) {
+				slopeThread t = new slopeThread(i, i, x, y, xMean, yMean);
+				Future<Double[]> sums = pool.submit(t);
+				futures.add(sums);
+			}
+		} else {
+			for(int i = 0; i < threadCount; i++) {
+				int start = i * (x.length/threadCount);
+				int end = (i+1) * (x.length/threadCount) - 1;
+				if(i == threadCount -1 && remainder != x.length) end += remainder;
+				slopeThread t = new slopeThread(start, end, x, y, xMean, yMean);
+				Future<Double[]> sums = pool.submit(t);
+				futures.add(sums);
+			}
 		}
 		double numerator = 0;
 		double denominator = 0;
@@ -309,13 +316,21 @@ public class LinearRegression {
 		double residualSum = 0.0;
 		ExecutorService pool = Executors.newFixedThreadPool(threadCount);
 		List<Future<Double>> sums = new ArrayList<Future<Double>>();
-		for(int i = 0; i < threadCount; i++) {
-			int start = i * (x.length/threadCount);
-			int end = (i+1) * (x.length/threadCount) - 1;
-			if(i == threadCount -1 && remainder != x.length) end += remainder;
-			sumSquareResidualsThread t = new sumSquareResidualsThread(start,end,slope,gIntercept,x,y);
-			Future<Double> sum = pool.submit(t);
-			sums.add(sum);
+		if(x.length < threadCount){
+			for(int i = 0; i < x.length; i++) {
+				sumSquareResidualsThread t = new sumSquareResidualsThread(i,i,slope,gIntercept,x,y);
+				Future<Double> sum = pool.submit(t);
+				sums.add(sum);
+			}
+		} else {
+			for(int i = 0; i < threadCount; i++) {
+				int start = i * (x.length/threadCount);
+				int end = (i+1) * (x.length/threadCount) - 1;
+				if(i == threadCount -1 && remainder != x.length) end += remainder;
+				sumSquareResidualsThread t = new sumSquareResidualsThread(start,end,slope,gIntercept,x,y);
+				Future<Double> sum = pool.submit(t);
+				sums.add(sum);
+			}
 		}
 		for(Future<Double> sum : sums) {
 			residualSum += sum.get();

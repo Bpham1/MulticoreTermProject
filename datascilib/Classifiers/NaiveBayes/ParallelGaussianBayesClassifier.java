@@ -91,6 +91,16 @@ public class ParallelGaussianBayesClassifier {
     }
 
     public void fit(List<List<Double>> X, List<Integer> Y){ //O(N^2) where N is the number of rows, but much faster in practice
+        if(X == null || Y == null || X.size() == 0 || Y.size() == 0){
+            throw new IllegalArgumentException("X and Y cannot be null or empty");
+        } else {
+            for(List<Double> x: X){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("X contains Empty or null points");
+                }
+            }
+        }
+
         inputList = X;
         resultList = Y;
         numSamples = X.size();
@@ -146,6 +156,16 @@ public class ParallelGaussianBayesClassifier {
 
 
     public List<Integer> predict(List<List<Double>> X) { //same as fit
+        if(X == null){
+            return null;
+        } else {
+            for(List<Double> x: X){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("X contains Empty or null points");
+                }
+            }
+        }
+
         List<Integer> predictions = new ArrayList<Integer>();
         double[][] posteriors = new double[X.size()][numClasses];
         int taskidx = X.size()*numClasses;

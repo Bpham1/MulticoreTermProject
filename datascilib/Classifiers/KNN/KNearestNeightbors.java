@@ -13,15 +13,40 @@ public class KNearestNeightbors {
     }
 
     public void fit(List<List<Double>> X, List<Integer> Y) {
+        if(X == null || Y == null || X.size() == 0 || Y.size() == 0){
+            throw new IllegalArgumentException("X and Y cannot be null or empty");
+        } else {
+            for(List<Double> x: X){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("X contains Empty or null points");
+                }
+            }
+        }
+
         this.X_train = X;
         this.Y_train = Y;
     }
 
     public List<Integer> predict(List<List<Double>> X) {
+        if(X == null){
+            return null;
+        } else {
+            for(List<Double> x: X){
+                if(x == null || x.size() == 0){
+                    throw new IllegalArgumentException("X contains Empty or null points");
+                }
+            }
+        }
+
         List<Integer> y_pred = new ArrayList<Integer>();
+
         // Can do in parallel
         for (List<Double> x : X) {
-            y_pred.add(_predict(x));
+            if(x.size() == 0){
+                y_pred.add(null);
+            } else {
+                y_pred.add(_predict(x));
+            }
         }
 
         return y_pred;
@@ -44,7 +69,13 @@ public class KNearestNeightbors {
         Arrays.parallelSort(neighbors);
 
         LinkedHashMap<Integer, Integer> votes = new LinkedHashMap<Integer, Integer>();
-        for (int i = 0; i < k; i++) {
+
+        int numNeighbors = k;
+        if(X_train.size() < k){
+            numNeighbors = X_train.size();
+        }
+
+        for (int i = 0; i < numNeighbors; i++) {
             Integer label = neighbors[i].label;
             if (votes.containsKey(label)) {
                 votes.put(label, votes.get(label) + 1);
