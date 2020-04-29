@@ -1,4 +1,5 @@
 General README
+For datascilib javadoc please visit: https://bpham1.github.io/MulticoreTermProject/
 
 - Linear Regression -- (Library Version)
 Loaction: datascilib/Regression/LinearRegression
