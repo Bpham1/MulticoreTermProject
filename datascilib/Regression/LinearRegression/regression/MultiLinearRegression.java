@@ -1,17 +1,18 @@
-package optimized.regression;
+package datascilib.Regression.LinearRegression.regression;
 
 import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import optimized.utils.OptionalPrinter;
+import datascilib.Regression.LinearRegression.utilities.OptionalPrinter;
+import datascilib.Regression.LinearRegression.utilities.ThreadInfo;
 
 /**
  * <h1>MultiLinearRegression</h1>
  * Multi-Linear Regression is a functional extension of Linear Regression, where each dependent variable is 
  * predicted using multiple independent variables. E.g. for every observation, there are multiple factors in play
- * to create the observed phenomenon. The inputs should be a 1-dimensional {@linkplain java.lang.Double} array {@link #y}
- * and a {@link #numObservations} by {@link #numFactors} {@linkplain java.lang.Double} array {@link #x}.
+ * to create the observed phenomenon. The inputs should be a 1-dimensional {@linkplain Double} array {@link #y}
+ * and a {@link #numObservations} by {@link #numFactors} {@linkplain Double} array {@link #x}.
  * As of 2020-04-26, it is implemented assuming non-correlative relationships between factors.
  *  </br></br>
  *  Use any of the 'fit' functions to calculate coefficients.
@@ -27,23 +28,23 @@ import optimized.utils.OptionalPrinter;
 public class MultiLinearRegression  {
 	
 	/**
-	 * The {@linkplain java.lang.Double} array which acts as the 1-dimensional set of dependent variables.
+	 * The {@linkplain Double} array which acts as the 1-dimensional set of dependent variables.
 	 */
 	private Double[] y;
 	
 	/**
-	 *  A {@link java.util.concurrent.atomic.AtomicReferenec} which acts as a reference to {@link #y}.
+	 *  A {@link java.util.concurrent.atomic.AtomicReference} which acts as a reference to {@link #y}.
 	 */
 	@SuppressWarnings("unused")
 	private AtomicReference<Double[]> yRef;
 	
 	/**
-	 * The {@linkplain java.lang.Double} 2-dimensional array which acts as the set of factors per observation.
+	 * The {@linkplain Double} 2-dimensional array which acts as the set of factors per observation.
 	 */
 	private Double[][] x;
 	
 	/**
-	 * A {@link java.util.concurrent.atomic.AtomicReferenec} which acts as a reference to {@link #x}.
+	 * A {@link java.util.concurrent.atomic.AtomicReference} which acts as a reference to {@link #x}.
 	 */
 	@SuppressWarnings("unused")
 	private AtomicReference<Double[][]> xRef;
@@ -59,27 +60,27 @@ public class MultiLinearRegression  {
 	private int numFactors;
 	
 	/**
-	 * A {@linkplain java.lang.Double} representing the calculated slope coefficients for the input dataset.
+	 * A {@linkplain Double} representing the calculated slope coefficients for the input dataset.
 	 */
 	private Double[] coeffs;
 	
 	/**
-	 * A {@linkplain java.lang.Double} representing the calculated intercept for the input dataset.
+	 * A {@linkplain Double} representing the calculated intercept for the input dataset.
 	 */
 	private Double intercept;
 	
 	/**
-	 * A {@linkplain java.lang.Double} array representing the calculated intercepts for the 1-dimensional LinearRegression using a single factor.
+	 * A {@linkplain Double} array representing the calculated intercepts for the 1-dimensional LinearRegression using a single factor.
 	 */
 	private Double[] intercepts;
 	
 	/**
-	 * A {@linkplain java.lang.Double} representing the calculates standard error values of 1-dimensional LinearRegression calculations for a single factor.
+	 * A {@linkplain Double} representing the calculates standard error values of 1-dimensional LinearRegression calculations for a single factor.
 	 */
 	private Double[] standardErrors;
 	
 	/**
-	 * A {@linkplain java.lang.Double} representing the calculated mean in {@link #y}.
+	 * A {@linkplain Double} representing the calculated mean in {@link #y}.
 	 */
 	private Double yMean;
 	
@@ -124,11 +125,11 @@ public class MultiLinearRegression  {
 				this.numFactors = x[0].length;
 				this.numObservations = y.length;
 				coeffs = new Double[numFactors];
-				intercept = new Double(0.0);
+				intercept = 0.0;
 				intercepts = new Double[numFactors];
 				yMean = Arrays.asList(y).stream().mapToDouble(val -> val).average().orElse(0.0);
-				threadCount = optimized.threadutils.ThreadInfo.threadCount(x.length);
-				int[] threadData = optimized.threadutils.ThreadInfo.dataPerThread(x.length, threadCount);
+				threadCount = ThreadInfo.threadCount(x.length);
+				int[] threadData = ThreadInfo.dataPerThread(x.length, threadCount);
 				dataPerThread = threadData[0];
 				remainder = threadData[1];
 				op = new OptionalPrinter(OptionalPrinter.HIGH_PRIORITY);
@@ -136,9 +137,9 @@ public class MultiLinearRegression  {
 	}
 	
 	/**
-	 * Calculates {@link #coeffs}, {@link #intercepts}, and {@link #intercept} using multiple instances of {@link optimized.regression.LinearRegression}
+	 * Calculates {@link #coeffs}, {@link #intercepts}, and {@link #intercept} using multiple instances of {@link datascilib.Regression.LinearRegression.regression.LinearRegression}
 	 * to calculate each coefficient. The calculated standard errors are used as weightings to calculate {@link #intercept}.
-	 * No arg {@link #simpleFit()} sequentially calls the parallel version of {@linkplain optimized.regression.LinearRegression}'s simpleFit.
+	 * No arg {@link #simpleFit()} sequentially calls the parallel version of {@linkplain datascilib.Regression.LinearRegression.regression.LinearRegression}'s simpleFit.
 	 * @throws ExecutionException 
 	 * @throws InterruptedException 
 	 */
@@ -176,7 +177,7 @@ public class MultiLinearRegression  {
 	//Getters
 	
 	/**
-	 * Calculates the estimated (predicted) value given a {@linkplain java.lang.Double} array of factors.
+	 * Calculates the estimated (predicted) value given a {@linkplain Double} array of factors.
 	 * @param xValues is the input array of factors, must be the same length as the length of factors MultiLinearRegression was constructed with.
 	 * @return the estimated (predicted) value = sum ( coeff_i * xValue_i ) + intercept, where i ranges from 0 - the number of factors {@link #numFactors}.
 	 */
@@ -188,7 +189,7 @@ public class MultiLinearRegression  {
 			estimatedValue += coeffs[index] * xValues[index];
 		}
 		estimatedValue += intercept;
-		return new Double(estimatedValue);
+		return estimatedValue;
 	}
 	
 	/**
@@ -198,7 +199,7 @@ public class MultiLinearRegression  {
 	 * @return the standard error of the prediction.
 	 */
 	public Double calcualteStandardError() {
-		Double standardError = new Double(0.0);
+		double standardError = 0.0;
 		double[] errors = new double[numObservations];
 		for(int estimationIndex = 0; estimationIndex < x.length; estimationIndex++) {
 			//Simple difference error TODO use different error calculation types especially those that can normalize 
@@ -211,7 +212,7 @@ public class MultiLinearRegression  {
 	
 	/**
 	 * Getter for {@linkplain #y}
-	 * @return the value of {@link #y} as a {@link java.lang.Double} array.
+	 * @return the value of {@link #y} as a {@link Double} array.
 	 */
 	public Double[] getY() {
 		return y;
@@ -219,7 +220,7 @@ public class MultiLinearRegression  {
 
 	/**
 	 * Getter for {@linkplain #x}
-	 * @return the value of {@link #x} as a {@link java.lang.Double} 2-dimensional array.
+	 * @return the value of {@link #x} as a {@link Double} 2-dimensional array.
 	 */
 	public Double[][] getX() {
 		return x;
@@ -243,7 +244,7 @@ public class MultiLinearRegression  {
 
 	/**
 	 * Getter for {@linkplain #coeffs}
-	 * @return {@link #coeffs} as a {@link java.lang.Double} array
+	 * @return {@link #coeffs} as a {@link Double} array
 	 */
 	public Double[] getCoeffs() {
 		return coeffs;
@@ -251,7 +252,7 @@ public class MultiLinearRegression  {
 
 	/**
 	 * Getter for {@linkplain #intercept}
-	 * @return the value of {@link #intercept} as a {@link java.lang.Double}, , possible to return null.
+	 * @return the value of {@link #intercept} as a {@link Double}, , possible to return null.
 	 */
 	public Double getIntercept() {
 		return intercept;
@@ -259,7 +260,7 @@ public class MultiLinearRegression  {
 
 	/**
 	 * Getter for {@linkplain #yMean}
-	 * @return the value of {@link #yMean} as a {@link java.lang.Double}.
+	 * @return the value of {@link #yMean} as a {@link Double}.
 	 */
 	public Double getyMean() {
 		return yMean;
@@ -283,7 +284,7 @@ public class MultiLinearRegression  {
 
 	/**
 	 * Getter for {@linkplain #op}
-	 * @return the {@link optimized.utils.OptionalPrinter} {@link #op}.
+	 * @return the {@link datascilib.Regression.LinearRegression.utilities.OptionalPrinter} {@link #op}.
 	 */
 	public OptionalPrinter getOptionalPrinter() {
 		return op;
@@ -291,7 +292,7 @@ public class MultiLinearRegression  {
 
 	/**
 	 * Getter for {@linkplain #standardErrors}
-	 * @return {@link #standardErrors} as a {@link java.lang.Double} array/
+	 * @return {@link #standardErrors} as a {@link Double} array/
 	 */
 	public Double[] getStandardErrors() {
 		return standardErrors;
