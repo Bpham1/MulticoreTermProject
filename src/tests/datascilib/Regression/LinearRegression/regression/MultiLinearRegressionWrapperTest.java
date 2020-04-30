@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.*;
+
 class MultiLinearRegressionWrapperTest {
 
     List<List<Double>> trainX;
@@ -78,5 +80,64 @@ class MultiLinearRegressionWrapperTest {
             System.out.print(dcf.format(label) + "                 ");
         }
         System.out.println();
+    }
+
+    @Test
+    void emptyInput(){
+        MultiLinearRegressionWrapper mlr = new MultiLinearRegressionWrapper();
+
+        trainX = new ArrayList<List<Double>>();
+        trainY = new ArrayList<Double>();
+        try{
+            mlr.fit(trainX, trainY);
+            System.out.println("Empty input accepted");
+        } catch (Exception e){
+            System.out.println("Empty input causes exception");
+        }
+
+        assertEquals(mlr.predict(trainX).size(), trainX.size());
+
+        for(int i = 0; i < 9; i++){
+            trainX.add(new ArrayList<Double>());
+        }
+
+        try{
+            mlr.fit(trainX, trainY);
+            mlr.predict(trainX);
+            System.out.println("Empty points accepted");
+        } catch (Exception e){
+            System.out.println("Empty points causes exception");
+        }
+    }
+
+    @Test
+    void nullInput(){
+        MultiLinearRegressionWrapper mlr = new MultiLinearRegressionWrapper();
+        try{
+            mlr.fit(null, null);
+            System.out.println("Null input accepted");
+        } catch (Exception e){
+            System.out.println("Null input causes exception");
+        }
+        assertNull(mlr.predict(null));
+    }
+
+    @Test
+    void smallInput(){
+        MultiLinearRegressionWrapper mlr = new MultiLinearRegressionWrapper();
+
+        trainX = new ArrayList<List<Double>>();
+        trainX.add(new ArrayList<Double>());
+        trainX.get(0).add(1.0);
+
+        testX = new ArrayList<List<Double>>();
+        testX.add(new ArrayList<Double>());
+        testX.get(0).add(4.0);
+
+        trainY = new ArrayList<Double>();
+        trainY.add(1.0);
+
+        mlr.fit(trainX, trainY);
+        mlr.predict(testX);
     }
 }

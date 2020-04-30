@@ -1,8 +1,34 @@
 Authors:
 Brandon Pham 		bp23792
-Matthew Machado		
-Jonathan Mounsif	
-Neel Drain 		npd388
+Matthew Machado		mrm5664	
+Neel Drain 			npd388
+Jonathan Mounsif	jrm4496
+
+Java Doc: http://bpham1.github.io/MulticoreTermProject
+
+## Project Description ##
+
+Topic: Parallel Algorithms for Data Mining
+
+Implement parallel algorithms related to data mining such as for clustering, classification or regression.
+
+
+Data Mining has predominantly been done in Python due to its simplicity in syntax and programming requirements.
+However, Python is very slow as a language and uses GIL (Global interpreter lock) that prevents more than one thread from executing Python code more than once.
+GIL can be circumvented in various ways, but the speed of Python was still bringing down efficiency.
+
+The goal of our project was to bring the speed and multithreading capabilities of Java to Data Mining.
+
+In our current release, we have provided the following algorithms:
+
+Linear Regression
+Decision Tree Classification
+Random Forest Classification
+K Nearest Neighbors Classification
+Gaussian Bayes Classification
+K Means Clustering
+
+
 
 ## How to Use ##
 
@@ -69,10 +95,12 @@ Methods:
 	void fit(List<Double> X, List<Double> Y) - fits model on given X and Y
 		X - X coordinates of the points to train model on
 		Y - Y coordinates of the points to train model on
+		
 	void fit(List<Double> X, List<Double> Y, boolean getGradient) - fits model on given X and Y; can improve model with gradient descent
 		X - X coordinates of the points to train model on
 		Y - Y coordinates of the points to train model on
 		getGradient - specifies whether to use gradient descent to improve model
+		
 	List<Double> predict(List<Double> X) - returns labels (Y) corresponding to X
 		X - X coordinates to predict labels on
 
@@ -94,10 +122,14 @@ Description:
 
 Import: datascilib.Regression.LinearRegression.regression.MultiLinearRegressionWrapper
 
+Constructor:
+	MultiLinearRegressionWrapper()
+
 Methods:
 	void fit(List<List<Double>> X, List<Double> Y) - fits model on given X and Y with gradient descent
 		X - multi-feature list of the points to train model on
 		Y - Corresponding values of the X points to train model on
+		
 	List<Double> predict(List<List<Double>> X) - returns values (Y) corresponding to X
 		X - multi-feature X to predict labels on
 
@@ -121,10 +153,12 @@ Import: datascilib.Classifiers.KNN.KNearestNeightbors
 Constructor: 
 	KNearestNeightbors(int k)
 		k - number of neighbors used to decide labels
+		
 Methods:
 	void fit(List<List<Double>> X, List<Integer> Y) - fits model on given X and Y
 		X - multi-feature list of the points to train model on
 		Y - corresponding integer labels of the X points to train model on
+		
 	List<Integer> predict(List<List<Double>> X) - returns integer labels (Y) corresponding to X
 		X - multi-feature X to predict integer labels on
 
@@ -143,6 +177,7 @@ Import: datascilib.Classifiers.NaiveBayes.ParallelGaussianBayesClassifier
 
 Constructor:
 	ParallelGaussianBayesClassifier()
+	
 	ParallelGaussianBayesClassifier(int numJobs)
 		numJobs - maximum # of threads to use
 
@@ -150,6 +185,7 @@ Methods:
 	void fit(List<List<Double>> X, List<Integer> Y) - fits model on given X and Y
 		X - multi-feature list of the points to train model on
 		Y - corresponding integer labels of the X points to train model on
+		
 	List<Integer> predict(List<List<Double>> X) - returns integer labels (Y) corresponding to X
 		X - multi-feature X to predict integer labels on
 
@@ -175,6 +211,7 @@ Methods:
 	void fit(List<List<Double>> X, List<Integer> Y) - fits model on given X and Y
 		X - multi-feature list of the points to train model on
 		Y - corresponding integer labels of the X points to train model on
+		
 	List<Integer> predict(List<List<Double>> X) - returns integer labels (Y) corresponding to X
 		X - multi-feature X to predict integer labels on
 
@@ -190,6 +227,7 @@ Import: datascilib.Classifiers.RandomForest.RandomForest
 Constructor:
 	RandomForest(int n_estimators)
 		n_estimators - # of DecisionTreeEstimators to average to produce labels
+		
 	RandomForest(int n_estimators, int n_jobs)
 		n_estimators - # of DecisionTreeEstimators to average to produce labels
 		n_jobs - maximum # of threads to use
@@ -198,6 +236,7 @@ Methods:
 	void fit(List<List<Double>> X, List<Integer> Y) - fits model on given X and Y
 		X - multi-feature list of the points to train model on
 		Y - corresponding integer labels of the X points to train model on
+		
 	List<Integer> predict(List<List<Double>> X) - returns integer labels (Y) corresponding to X
 		X - multi-feature X to predict integer labels on
 
@@ -223,6 +262,7 @@ Import: datascilib.Clustering.KMeans.KMeans
 Constructor:
 	KMeans(int n_cluster)
 		n_cluster - # of clusters centers to calculate
+		
 	KMeans(int n_cluster, int n_jobs)
 		n_cluster - # of clusters centers to calculate
 		n_jobs - maximum # of threads to use
@@ -230,6 +270,7 @@ Constructor:
 Methods:
 	void fit(List<List<Double>> X) - fits model on given X
 		X - multi-feature list of the points to train model on
+		
 	List<Integer> predict(List<List<Double>> X) - returns integer labels (Y) corresponding to X
 		X - multi-feature X to predict integer labels on
 
@@ -314,6 +355,7 @@ Import: datascilib.Utils.LabelEnumerator
 Constructor:
 	LabelEnumerator<T>()
 		T - class type to enumerate
+		
 	LabelEnumerator<T>(List<T> labels)
 		T - class type to enumerate
 		labels - List to map and enumerate
@@ -321,6 +363,7 @@ Constructor:
 Methods:
 	List<Integer> enumerateLabels(List<T> labels) - returns a list of enumerated labels (starting from 0 and incrementing) corresponding to passed labels; stores a mapping for the labelEnumerates function
 		labels - labels to convert and enumerate
+		
 	List<T> labelEnumerates(List<Integer> enumeratedLabels) - converts a list to its original labels corresponding to the stored mapping and returns it
 		enumeratedLabels - labels previously enumerated that will be converted back
 
