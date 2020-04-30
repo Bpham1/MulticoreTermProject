@@ -4,16 +4,58 @@ import datascilib.Classifiers.DecisionTree.DescisionTreeEstimator;
 
 import java.lang.management.ManagementFactory;
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * <h1>Random Forest</h1>
+ * Random Forest is an enhanced version of Decision Tree that aims to reduce overfitting by averaging many weaker
+ * Decision Trees.
+ * </br></br>
+ * Random Forest works by implementing many {@link DescisionTreeEstimator}s defined by {@link #n_estimators} that each fit on
+ * a randomized data set derived from the X and Y passed into the fit function. We first randomize which rows to fit on
+ * by taking a "bootstrap", which is the same dimensions as X, but is created by picking random rows from X with
+ * repeats. Next, the features that are considered are also randomized.
+ * </br></br>
+ * When using {@link #predict(List)}, each {@link DescisionTreeEstimator} predicts the results and those predictions are averaged to
+ * create the final result.
+ * </br></br>
+ * @author Brandon Pham
+ * @version 0.1
+ * @since 2020-04-29
+ */
 public class RandomForest{
+    /**
+     * A {@link java.lang.Integer} which defines how many Decision Tree Estimators will be used
+     */
     private int n_estimators;
+    /**
+     * A {@link java.lang.Integer} which defines maximum number of threads to use
+     */
     private int n_jobs;
+
+    /**
+     * A {@link List} which holds the {@link DescisionTreeEstimator}s used
+     */
     private List<DescisionTreeEstimator> estimators;
+    /**
+     * A {@link List} which holds the data to fit each {@link DescisionTreeEstimator}
+     */
     private List<List<List<Double>>> train_datas;
+    /**
+     * A {@link Random} object used to generate random {@link java.lang.Integer}s
+     */
     private Random r;
 
+    /**
+     * The main constructor. Takes a {@link java.lang.Integer} that defines how many {@link DescisionTreeEstimator}s
+     * to use.
+     *
+     * Checks for if the passed value is greater than 0.
+     *
+     * @param n_estimators is a {@link java.lang.Integer} that defines how many {@link DescisionTreeEstimator}s to use
+     */
     public RandomForest(int n_estimators){
         if(n_estimators <= 0){
             throw new IllegalArgumentException("Must have at least 1 estimator");
@@ -25,6 +67,15 @@ public class RandomForest{
         this.train_datas = new ArrayList<List<List<Double>>>();
     }
 
+    /**
+     * An alternative constructor. Takes two {@link java.lang.Integer}s that defines how many
+     * {@link DescisionTreeEstimator}s to use and maximum number of threads to use.
+     *
+     * Checks for if the passed values are greater than 0.
+     *
+     * @param n_estimators is a {@link java.lang.Integer} that defines how many {@link DescisionTreeEstimator}s to use
+     * @param n_jobs is a {@link java.lang.Integer} that defines maximum number of threads to use.
+     */
     public RandomForest(int n_estimators, int n_jobs){
         if(n_estimators <= 0){
             throw new IllegalArgumentException("Must have at least 1 estimator");
@@ -39,17 +90,16 @@ public class RandomForest{
         this.train_datas = new ArrayList<List<List<Double>>>();
     }
 
-    private RandomForest(int n_jobs, List<DescisionTreeEstimator> estimators){
-        this.n_estimators = estimators.size();
-        this.n_jobs = n_jobs;
-        this.r = new Random();
-        this.estimators = new ArrayList<DescisionTreeEstimator>();
-        for(int i = 0; i < n_estimators; i++){
-            estimators.add(estimators.get(i).copy());
-        }
-        this.train_datas = new ArrayList<List<List<Double>>>();
-    }
-
+    /**
+     * Fits a 2-D List of {@link java.lang.Double}s X and a 1-D List of {@link java.lang.Integer}s Y.  Creates
+     * {@link #n_estimators} number of {@link DescisionTreeEstimator}s and fits a randomized bootstrap of the passed X
+     * to each.
+     *
+     * Checks of: empty lists, null values
+     *
+     * @param X is a 2-D List of {@link java.lang.Double} points
+     * @param Y is a 1-D List of {@link java.lang.Integer} labels
+     */
     public void fit(List<List<Double>> X, List<Integer> Y) {
         if(X == null || Y == null || X.size() == 0 || Y.size() == 0){
             throw new IllegalArgumentException("X and Y cannot be null or empty");
@@ -105,6 +155,15 @@ public class RandomForest{
         }
     }
 
+    /**
+     * Predicts the labels for a 2-D List of {@link java.lang.Double}s X. Passed the X to each estimator and averages
+     * the results to create the final prediction, which is a 1-D List of {@link java.lang.Integer} labels.
+     *
+     * Checks of: empty lists
+     *
+     * @param X is a 2-D List of {@link java.lang.Double} points
+     * @return 1-D List of {@link java.lang.Integer} labels corresponding to X
+     */
     public List<Integer> predict(List<List<Double>> X) {
         if(X == null){
             return null;

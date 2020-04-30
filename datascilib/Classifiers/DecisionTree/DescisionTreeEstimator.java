@@ -6,22 +6,80 @@ import java.util.concurrent.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+/**
+ * <h1>Descision Tree Estimator</h1>
+ * Decision Tree Estimator is a tree that splits fitted values into a tree, where at each split, the fitted X and Y is
+ * split based on a threshold and feature that optimizes the GINI gain.
+ * </br></br>
+ * If the tree is a leaf, returns a randomly selected classifier from the labels stored in that tree.
+ * </br></br>
+ * @author Brandon Pham
+ * @version 0.1
+ * @since 2020-04-29
+ */
 public class DescisionTreeEstimator{
+    /**
+     * A {@link java.lang.Integer} which defines maximum number of threads to use.
+     */
     private int n_jobs;
+    /**
+     * A {@link java.lang.Double} which defines the threshold to compare with.
+     */
     private double threshold;
+    /**
+     * A {@link java.lang.Integer} which defines the feature to compare with.
+     */
     private int feature_idx;
+    /**
+     * A {@link List} which defines the possible classifiers the tree returns.
+     */
     private List<Integer> classifiers;
+    /**
+     * A {@link java.lang.Double} which defines the GINI impurity of the fitted values.
+     */
     private double impurity;
+    /**
+     * A {@link java.util.HashMap} which maps the # of unique labels/classes.
+     */
     private HashMap<Integer, Integer> classCount;
+    /**
+     * A 2-D {@link java.util.List} which contains {@link java.lang.Double} points that this tree was fitted on.
+     */
     private List<List<Double>> X;
+    /**
+     * A 1-D {@link java.util.List} which contains {@link java.lang.Integer} labels that this tree was fitted on.
+     */
     private List<Integer> Y;
+    /**
+     * A 1-D {@link java.util.List} which contains {@link java.lang.Integer} indexes corresponding to which features to
+     * consider.
+     */
     private List<Integer> feature_set;
+    /**
+     * A {@link DescisionTreeEstimator} which was fit on values less than the threshold.
+     */
     private DescisionTreeEstimator lessTree;
+    /**
+     * A {@link DescisionTreeEstimator} which was fit on values greater than or equal to the threshold.
+     */
     private DescisionTreeEstimator greaterTree;
+    /**
+     * A {@link java.util.List} of {@link DescisionTreeEstimator}s which contains all children
+     * {@link DescisionTreeEstimator}s.
+     */
     private List<DescisionTreeEstimator> treePool;
+    /**
+     * A {@link java.util.List} which contains the X values sent to the children {@link DescisionTreeEstimator}s.
+     */
     private List<List<List<Double>>> XInputs;
+    /**
+     * A {@link java.util.List} which contains the Y values sent to the children {@link DescisionTreeEstimator}s.
+     */
     private List<List<Integer>> YInputs;
 
+    /**
+     * The main constructor.
+     */
     public DescisionTreeEstimator(){
         this.n_jobs = ManagementFactory.getThreadMXBean().getThreadCount();
         this.classCount = null;
@@ -34,6 +92,13 @@ public class DescisionTreeEstimator{
         this.YInputs = new ArrayList<List<Integer>>();
     }
 
+    /**
+     * An alternative constructor. Takes a {@link java.lang.Integer} that defines maximum number of threads to use.
+     *
+     * Checks for if the passed value is greater than 0.
+     *
+     * @param n_jobs is a {@link java.lang.Integer} that defines maximum number of threads to use.
+     */
     public DescisionTreeEstimator(int n_jobs){
         if(n_jobs <= 0){
             throw new IllegalArgumentException("n_jobs must be at least 1");
@@ -49,6 +114,16 @@ public class DescisionTreeEstimator{
         this.YInputs = new ArrayList<List<Integer>>();
     }
 
+    /**
+     * An alternative constructor. Takes a {@link java.lang.Integer} that defines maximum number of threads to use and
+     * a {@link java.util.List} contains {@link java.lang.Integer} indexes of the features to consider.
+     *
+     * Checks for if the passed value is greater than 0.
+     *
+     * @param n_jobs is a {@link java.lang.Integer} that defines maximum number of threads to use.
+     * @param feature_set is a {@link java.util.List} that contains {@link java.lang.Integer} indexes of the features
+     *                    to consider.
+     */
     public DescisionTreeEstimator(int n_jobs, List<Integer> feature_set){
         if(n_jobs <= 0){
             throw new IllegalArgumentException("n_jobs must be at least 1");
@@ -65,6 +140,9 @@ public class DescisionTreeEstimator{
         this.YInputs = new ArrayList<List<Integer>>();
     }
 
+    /**
+     * An private constructor used for creating a copy of the current tree.
+     */
     private DescisionTreeEstimator(int n_jobs, double threshold, int feature_idx, List<Integer> classifiers, double impurity,
                                    HashMap<Integer, Integer> classCount, List<List<Double>> X, List<Integer> Y,
                                    List<Integer> feature_set, DescisionTreeEstimator lessTree,
@@ -93,6 +171,16 @@ public class DescisionTreeEstimator{
         }
     }
 
+    /**
+     * Fits a 2-D List of {@link java.lang.Double}s X and a 1-D List of {@link java.lang.Integer}s Y. Compares every
+     * possible combination of thresholds and features to find the optimal combination that leads to the most gain.
+     * Splits the X and Y into two trees that recursively split until gain can't be increased.
+     *
+     * Checks of: empty lists, null values
+     *
+     * @param X is a 2-D List of {@link java.lang.Double} points
+     * @param Y is a 1-D List of {@link java.lang.Integer} labels
+     */
     // O(N^2 F) - slow, should be parallelized
     public void fit(List<List<Double>> X, List<Integer> Y) {
         if(X == null || Y == null || X.size() == 0 || Y.size() == 0){
@@ -279,6 +367,15 @@ public class DescisionTreeEstimator{
         }
     }
 
+    /**
+     * Predicts the labels for a 2-D List of {@link java.lang.Double}s X. Compares features and thresholds. Traverses
+     * trees until a classifier is returned.
+     *
+     * Checks of: empty lists
+     *
+     * @param X is a 2-D List of {@link java.lang.Double} points.
+     * @return 1-D List of {@link java.lang.Integer} labels corresponding to X.
+     */
     //O(NlogN) - slowish, but difficult to parallelize
     public List<Integer> predict(List<List<Double>> X) {
         if(X == null){
@@ -337,6 +434,15 @@ public class DescisionTreeEstimator{
         return predictions;
     }
 
+    /**
+     * Helper function for {@link #predict(List)}. Predicts the labels for a List of {@link java.lang.Double}s X.
+     * Compares features and thresholds. Traverses trees until a classifier is returned.
+     *
+     * Checks of: empty lists
+     *
+     * @param X is a 1-D List of {@link java.lang.Double} points.
+     * @return {@link java.lang.Integer} label corresponding to X.
+     */
     private Integer predictHelper(List<Double> X){
         if(classifiers != null && classifiers.size() != 0){
             int randomClass = ThreadLocalRandom.current().nextInt(classifiers.size());
@@ -352,11 +458,18 @@ public class DescisionTreeEstimator{
         }
     }
 
+    /**
+     * Copies current tree and returns it.
+     * @return {@link DescisionTreeEstimator} copy of current tree.
+     */
     public DescisionTreeEstimator copy() {
         return new DescisionTreeEstimator(n_jobs, threshold,feature_idx, classifiers, impurity, classCount, X, Y,
                 feature_set, lessTree, greaterTree);
     }
 
+    /**
+     * Helper class that groups a feature index, threshold, and associated gain together.
+     */
     public class FeatThreshPair{
         public int feature;
         public double threshold;
@@ -369,6 +482,9 @@ public class DescisionTreeEstimator{
         }
     }
 
+    /**
+     * Helper Callable used to return the gain associated with a certain feature and threshold.
+     */
     private class testThresholdCallable implements Callable<FeatThreshPair> {
         List<Integer> rowIdxs;
         double gain;
@@ -469,6 +585,10 @@ public class DescisionTreeEstimator{
 
     // O(Y)
     // Y - length of labels
+    /**
+     * Calculates # of unique labels/classes
+     * @param labels is a {@link java.util.List} of {@link java.lang.Integer} labels
+     */
     private HashMap<Integer, Integer> getClassCount(List<Integer> labels){
         HashMap<Integer, Integer>  classCount = new HashMap<Integer, Integer> ();
         for (Integer label : (List<Integer>) labels) {
@@ -482,6 +602,11 @@ public class DescisionTreeEstimator{
 
     // O(C)
     // C - # of unique labels
+    /**
+     * Calculates impurity of a classCount {@link java.util.HashMap}
+     * @param classCount is a {@link java.util.HashMap} used to store # of unique labels/classes
+     * @param numRows is a {@link java.lang.Integer} containing # of rows in fitted X
+     */
     private double getImpurity(HashMap<Integer, Integer> classCount, int numRows){
         double impurity = 1;
         if(classCount.keySet().size() == 1){

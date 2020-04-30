@@ -3,15 +3,38 @@ package datascilib.Classifiers.KNN;
 import java.util.*;
 import java.util.stream.IntStream;
 
+/**
+ * <h1>K Nearest Neighbors</h1>
+ * A distance-based classifier that predicts labels finding the K "nearest" points and using the majority label of those
+ * "neighbors". How near a point is based on a Euclidean distance.
+ * </br></br>
+ * Note that no actions are required during the fitting.
+ * </br></br>
+ * @author Jonathan Mounsif
+ * @version 0.1
+ * @since 2020-04-29
+ */
 public class KNearestNeightbors {
-    public int k;
-    public List<List<Double>> X_train;
-    public List<Integer> Y_train;
+    private int k;
+    private List<List<Double>> X_train;
+    private List<Integer> Y_train;
 
+    /**
+     * The main constructor. Takes in an {@link java.lang.Integer} k that specifies how many neighbors to consider.
+     * @param k is an {@link java.lang.Integer} k that specifies how many neighbors to consider.
+     */
     public KNearestNeightbors(int k) {
         this.k = k;
     }
 
+    /**
+     * Stores a 2-D List of {@link java.lang.Double}s X and a 1-D List of {@link java.lang.Integer}s Y.
+     *
+     * Checks of: empty lists, null values
+     *
+     * @param X is a 2-D List of {@link java.lang.Double} points
+     * @param Y is a 1-D List of {@link java.lang.Integer} labels
+     */
     public void fit(List<List<Double>> X, List<Integer> Y) {
         if(X == null || Y == null || X.size() == 0 || Y.size() == 0){
             throw new IllegalArgumentException("X and Y cannot be null or empty");
@@ -27,6 +50,14 @@ public class KNearestNeightbors {
         this.Y_train = Y;
     }
 
+    /**
+     * Predicts the labels for a 2-D List of {@link java.lang.Double}s X.
+     *
+     * Checks of: empty lists
+     *
+     * @param X is a 2-D List of {@link java.lang.Double} points.
+     * @return 1-D List of {@link java.lang.Integer} labels corresponding to X.
+     */
     public List<Integer> predict(List<List<Double>> X) {
         if(X == null){
             return null;
@@ -52,6 +83,11 @@ public class KNearestNeightbors {
         return y_pred;
     }
 
+    /**
+     * Helper function for predict. Takes in a {@link List} of {@link java.lang.Double} that represents a single row in
+     * X.
+     * @param x is a {@link List} of {@link java.lang.Double} that is a single row of X
+     */
     private Integer _predict(List<Double> x) {
         Neighbor[] neighbors = new Neighbor[X_train.size()];
 
@@ -94,6 +130,11 @@ public class KNearestNeightbors {
         return decision;
     }
 
+    /**
+     * Calculates the distance between two points that are a {@link List} of {@link java.lang.Double}s.
+     * @param x is a {@link List} of {@link java.lang.Double} that is a single row of X
+     * @param x_train is a {@link List} of {@link java.lang.Double} that is a single row of fitted X
+     */
     private Double distance(List<Double> x, List<Double> x_train) {
         double sum = 0;
 

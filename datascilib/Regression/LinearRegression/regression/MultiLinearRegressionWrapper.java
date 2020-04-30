@@ -4,13 +4,34 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * <h1>Multi-Linear Regression Wrapper</h1>
+ * A wrapper for {@link MultiLinearRegression} that is more inline with the rest of the library with a single fit
+ * and predict method.
+ * </br></br>
+ * @author Brandon Pham
+ * @version 0.1
+ * @since 2020-04-29
+ */
 public class MultiLinearRegressionWrapper {
+    /**
+     * A {@link MultiLinearRegression} object that is wrapped.
+     */
     private MultiLinearRegression lr;
 
+    /**
+     * The main constructor.
+     */
     public MultiLinearRegressionWrapper(){
         this.lr = null;
     }
 
+    /**
+     * Fits 2-D {@link List} of {@link java.lang.Double} points X and a 1-D {@link List} of corresponding
+     * {@link java.lang.Double} values Y.
+     * @param X is a 2-D {@link List} of {@link java.lang.Double} points
+     * @param Y is a 1-D {@link List} of corresponding {@link java.lang.Double} values
+     */
     public void fit(List<List<Double>> X, List<Double> Y){
 
         Double[][] Xarray = new Double[X.size()][];
@@ -27,6 +48,12 @@ public class MultiLinearRegressionWrapper {
         }
     }
 
+    /**
+     * Predicts 1-D {@link List} of {@link java.lang.Double} values corresponding to passed 2-D {@link List} of
+     * {@link java.lang.Double} points X
+     * @param X is a 2-D {@link List} of {@link java.lang.Double} points
+     * @return a 1-D {@link List} of {@link java.lang.Double} values corresponding to X
+     */
     public List<Double> predict(List<List<Double>> X){
         if(lr == null){
             return null;

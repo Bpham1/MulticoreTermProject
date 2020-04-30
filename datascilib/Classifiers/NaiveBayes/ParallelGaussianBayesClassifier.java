@@ -1,5 +1,7 @@
 package datascilib.Classifiers.NaiveBayes;
 
+import datascilib.Regression.LinearRegression.regression.MultiLinearRegression;
+
 import java.lang.management.ManagementFactory;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -7,6 +9,17 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
+/**
+ * <h1>Gaussian Bayes Classifier</h1>
+ * A probabilistic classifier based on Bayes' theorem. Calculates the probability of a label given a feature value and
+ * uses the probabilities to calculate the probability of a label based on fitted.
+ * </br></br>
+ * The prediction returned is the label with the highest probability based on given feature values.
+ * </br></br>
+ * @author Matthew Machado
+ * @version 0.1
+ * @since 2020-04-29
+ */
 public class ParallelGaussianBayesClassifier {
     private List<List<Double>> inputList;
     private List<Integer> resultList;
@@ -19,14 +32,24 @@ public class ParallelGaussianBayesClassifier {
     private double[][] vars;
     private float[] priors;
 
+    /**
+     * The main constructor.
+     */
     public ParallelGaussianBayesClassifier(){
         this.numJobs = ManagementFactory.getThreadMXBean().getThreadCount();
     }
 
+    /**
+     * An alternative constructor. Takes an {@link java.lang.Integer} that specifies maximum number of threads to use.
+     * @param numJobs is a {@link java.lang.Integer} that specifies maximum number of threads to use.
+     */
     public ParallelGaussianBayesClassifier(int numJobs){
         this.numJobs = numJobs;
     }
 
+    /**
+     * A helper Runnable that adds to Class Array in parallel
+     */
     private class getClassArrayRunnable implements Runnable{
         private int startidx;
         private int chunksize;
@@ -50,6 +73,9 @@ public class ParallelGaussianBayesClassifier {
         }
     }
 
+    /**
+     * A helper Runnable that gets Means
+     */
     private class getMeansRunnable implements Runnable{
         private int startidx;
         private int chunksize;
@@ -90,6 +116,14 @@ public class ParallelGaussianBayesClassifier {
         }
     }
 
+    /**
+     * Fits a 2-D List of {@link java.lang.Double}s X and a 1-D List of {@link java.lang.Integer}s Y.
+     *
+     * Checks of: empty lists, null values
+     *
+     * @param X is a 2-D List of {@link java.lang.Double} points
+     * @param Y is a 1-D List of {@link java.lang.Integer} labels
+     */
     public void fit(List<List<Double>> X, List<Integer> Y){ //O(N^2) where N is the number of rows, but much faster in practice
         if(X == null || Y == null || X.size() == 0 || Y.size() == 0){
             throw new IllegalArgumentException("X and Y cannot be null or empty");
@@ -154,7 +188,14 @@ public class ParallelGaussianBayesClassifier {
         executor.shutdown();
     }
 
-
+    /**
+     * Predicts the labels for a 2-D List of {@link java.lang.Double}s X.
+     *
+     * Checks of: empty lists
+     *
+     * @param X is a 2-D List of {@link java.lang.Double} points.
+     * @return 1-D List of {@link java.lang.Integer} labels corresponding to X.
+     */
     public List<Integer> predict(List<List<Double>> X) { //same as fit
         if(X == null){
             return null;
@@ -215,6 +256,9 @@ public class ParallelGaussianBayesClassifier {
         return predictions;
     }
 
+    /**
+     * A helper Runnable that calculates corresponding labels for {@link #predict(List)}
+     */
     private class predictHelperRunnable implements Runnable{
         private double[][] posteriors;
         private int startid;
@@ -252,7 +296,9 @@ public class ParallelGaussianBayesClassifier {
 
         }
     }
-
+    /**
+     * Another helper Runnable that calculates corresponding labels for {@link #predict(List)}
+     */
     private class getPredRunnable implements Runnable{
         private double[][] posteriors;
         private int[] pred;

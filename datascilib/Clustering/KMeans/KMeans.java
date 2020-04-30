@@ -9,13 +9,46 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 
+/**
+ * <h1>K Means</h1>
+ * Clustering algorithm that can generate optimal labels when no training labels are provided.
+ * </br></br>
+ * Works by alternating between assigning points to their closest center and moving the center to the average of the
+ * assigned points, until assigned points no longer change. The centers are now the optimal labels for the points
+ * assigned to it. When predicting, the label is determined by the closest center to the point.
+ * </br></br>
+ * @author Brandon Pham
+ * @version 0.1
+ * @since 2020-04-29
+ */
 public class KMeans {
+    /**
+     * A 2-D {@link List} which contains {@link java.lang.Double} points to generate centers around.
+     */
     private List<List<Double>> points;
+    /**
+     * A 2-D {@link List} which contains {@link java.lang.Integer} labels that is returned by {@link #predict(List)}
+     */
     private List<Integer> prediction;
+    /**
+     * A 2-D {@link List} which contains {@link java.lang.Double} centers.
+     */
     private List<List<Double>> centers;
+    /**
+     * A {@link List} which contains {@link CenterMultiD} center objects corresponding to the centers.
+     */
     private List<CenterMultiD> centerObjs;
+    /**
+     * A {@link java.lang.Integer} which defines maximum number iterations before stopping the fitting.
+     */
     int max_iter;
+    /**
+     * A {@link java.lang.Integer} which defines # of clusters to create.
+     */
     int n_clusters;
+    /**
+     * A {@link java.lang.Integer} which defines maximum number of threads to use.
+     */
     int n_jobs;
 
     // P - # of points
@@ -23,7 +56,11 @@ public class KMeans {
     // D - # of dimensions for each point
     // I - # of iterations
     // N - # of clusters
-
+    /**
+     * The main constructor. Takes in a {@link java.lang.Integer} that defines # of clusters to create. Defaults to
+     * 300 iterations.
+     * @param n_cluster is an {@link java.lang.Integer} that defines # of clusters to create.
+     */
     public KMeans(int n_cluster){
         if(n_cluster <= 0){
             throw new IllegalArgumentException("n_cluster must be at least 1");
@@ -33,6 +70,12 @@ public class KMeans {
         this.n_jobs = ManagementFactory.getThreadMXBean().getThreadCount();
     }
 
+    /**
+     * An altnerative constructor. Takes in two {@link java.lang.Integer}s that defines # of clusters to create and
+     * maximum number of Threads to use. Defaults to 300 iterations.
+     * @param n_cluster is an {@link java.lang.Integer} that defines # of clusters to create.
+     * @param n_jobs is an {@link java.lang.Integer} that defines maximum number of threads to use.
+     */
     public KMeans(int n_cluster, int n_jobs){
         if(n_cluster <= 0){
             throw new IllegalArgumentException("n_cluster must be at least 1");
@@ -45,6 +88,13 @@ public class KMeans {
         this.n_jobs = n_jobs;
     }
 
+    /**
+     * An altnerative constructor. Takes in three {@link java.lang.Integer}s that defines # of clusters to create,
+     * maximum number of iterations for fitting, and maximum number of Threads to use.
+     * @param n_cluster is an {@link java.lang.Integer} that defines # of clusters to create.
+     * @param max_iter is an {@link java.lang.Integer} that defines maximum number of iterations before fitting stops.
+     * @param n_jobs is an {@link java.lang.Integer} that defines maximum number of threads to use.
+     */
     public KMeans(int n_cluster, int max_iter, int n_jobs){
         if(n_cluster <= 0){
             throw new IllegalArgumentException("n_cluster must be at least 1");
@@ -60,6 +110,14 @@ public class KMeans {
         this.n_jobs = n_jobs;
     }
 
+    /**
+     * Fits a 2-D List of {@link java.lang.Double} points. Alternates between assigning points to their closest center
+     * and moving the centers to the average of their assigned points, until assigned points no longer change.
+     *
+     * Checks of: empty lists, null values
+     *
+     * @param points is a 2-D List of {@link java.lang.Double} points
+     */
     public void fit(List<List<Double>> points){
         if(points == null || points.size() == 0){
             throw new IllegalArgumentException("points cannot be null or empty");
@@ -92,6 +150,13 @@ public class KMeans {
         }
     }
 
+
+    /**
+     * Initializes the centers.
+     *
+     * @param n_clusters is an {@link java.lang.Integer} that defines # of centers to make.
+     * @return 2-D List of {@link java.lang.Double} centers randomly selected from X.
+     */
     private List<List<Double>> initCenters(int n_clusters){
         List<List<Double>> temp = new ArrayList<List<Double>>(points);
         List<List<Double>> new_points = new ArrayList<List<Double>>();
@@ -118,6 +183,12 @@ public class KMeans {
         return new_points;
     }
 
+    /**
+     * Initializes the center objects based on centers.
+     *
+     * @param centers is a 2-D {@link List} of {@link java.lang.Double} centers
+     * @return List of {@link CenterMultiD} center objects corresponding to centers.
+     */
     private List<CenterMultiD> createCenters(List<List<Double>> centers){
         // O(C)
         List<CenterMultiD> centerObjs = new ArrayList<CenterMultiD>();
@@ -127,6 +198,12 @@ public class KMeans {
         return centerObjs;
     }
 
+    /**
+     * Initializes the center objects based on centers. Alternates between assigning points to their closest center
+     * and moving the centers to the average of their assigned points, until assigned points no longer change.
+     *
+     * @return true if centers were updated and false if centers did not change.
+     */
     private boolean UpdateCenters() throws InterruptedException {
         List<Thread> threads = new ArrayList<Thread>();
         int thread_size;
@@ -199,10 +276,24 @@ public class KMeans {
         return false;
     }
 
+    /**
+     * Returns centers.
+     *
+     * @return generated centers
+     */
     public List<List<Double>> getCenters() {
         return centers;
     }
 
+    /**
+     * Predicts the labels for a 2-D List of {@link java.lang.Double}s new_points. Assigns each point to their closest
+     * center and returns their value as the label.
+     *
+     * Checks of: empty lists
+     *
+     * @param new_points is a 2-D {@link List} of {@link java.lang.Double} points.
+     * @return 1-D List of {@link java.lang.Integer} labels corresponding to X.
+     */
     public List<Integer> predict(List<List<Double>> new_points) {
         if(new_points == null){
             return null;
