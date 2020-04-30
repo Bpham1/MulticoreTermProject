@@ -4,6 +4,13 @@ datascilib.Classifiers.KNN
 datascilib.Classifiers.NaiveBayes
 datascilib.Classifiers.RandomForest
 datascilib.Clustering.KMeans
+datascilib.Intefaces
 datascilib.Regression.LinearRegression.regression
 datascilib.Regression.LinearRegression.utilities
 datascilib.Utils
+tests.datascilib.Classifiers.DecisionTree
+tests.datascilib.Classifiers.KNN
+tests.datascilib.Classifiers.NaiveBayes
+tests.datascilib.Classifiers.RandomForest
+tests.datascilib.Clustering.KMeans
+tests.datascilib.Regression.LinearRegression.regression
