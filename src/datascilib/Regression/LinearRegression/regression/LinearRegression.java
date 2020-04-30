@@ -405,6 +405,9 @@ public class LinearRegression {
 	 * @return the estimated value (y-value), null if one or neither has been calculated yet.
 	 */
 	public Double getEstimatedValue(Double xValue) {
+		if(x != null && y != null && x.length == 1 && y.length == 1){
+			return y[0];
+		}
 		if(intercept == null || slope == null) return null;
 		return intercept + xValue * slope;
 	}

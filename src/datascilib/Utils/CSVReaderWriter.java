@@ -190,7 +190,8 @@ public class CSVReaderWriter {
             if(featureNames.get(columnIdx).equals(startCol)){
                 startColFound = true;
                 startColIdx = columnIdx;
-            } else if(featureNames.get(columnIdx).equals(endCol)){
+            }
+            if(featureNames.get(columnIdx).equals(endCol)){
                 endColFound = true;
                 endColIdx = columnIdx + 1;
             }

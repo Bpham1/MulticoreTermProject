@@ -182,6 +182,9 @@ public class MultiLinearRegression  {
 	 * @return the estimated (predicted) value = sum ( coeff_i * xValue_i ) + intercept, where i ranges from 0 - the number of factors {@link #numFactors}.
 	 */
 	public Double getEstimatedValue(Double[] xValues) {
+		if(x != null && y != null && x.length == 1 && y.length == 1){
+			return y[0];
+		}
 		if(xValues == null) throw new NullPointerException("Input xValues is null, maybe you forgot to intialize it?");
 		if(xValues.length != numFactors) throw new IllegalStateException("Input xValues length (" + xValues.length + ") must be " + numFactors + " long.");
 		double estimatedValue = 0.0;
