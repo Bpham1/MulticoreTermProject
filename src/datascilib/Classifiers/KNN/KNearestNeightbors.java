@@ -1,6 +1,13 @@
 package datascilib.Classifiers.KNN;
 
+import datascilib.Classifiers.DecisionTree.DescisionTreeEstimator;
+
+import java.lang.management.ManagementFactory;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.stream.IntStream;
 
 /**
@@ -18,6 +25,12 @@ public class KNearestNeightbors {
     private int k;
     private List<List<Double>> X_train;
     private List<Integer> Y_train;
+    private int n_jobs;
+
+    public KNearestNeightbors(int k, int n_jobs) {
+        this.k = k;
+        this.n_jobs = n_jobs;
+    }
 
     /**
      * The main constructor. Takes in an {@link Integer} k that specifies how many neighbors to consider.
@@ -25,6 +38,7 @@ public class KNearestNeightbors {
      */
     public KNearestNeightbors(int k) {
         this.k = k;
+        this.n_jobs = ManagementFactory.getThreadMXBean().getThreadCount();
     }
 
     /**
@@ -91,11 +105,6 @@ public class KNearestNeightbors {
     private Integer _predict(List<Double> x) {
         Neighbor[] neighbors = new Neighbor[X_train.size()];
 
-        // Can do in parallel
-//        for (int i = 0; i < neighbors.length; i++) {
-//            neighbors[i] = new Neighbor(distance(X_train.get(i), x), Y_train.get(i));
-//        }
-
         // Parallel
         IntStream.range(0, neighbors.length).parallel().forEach(i -> {
             neighbors[i] = new Neighbor(distance(X_train.get(i), x), Y_train.get(i));
@@ -139,19 +148,10 @@ public class KNearestNeightbors {
         double sum = 0;
 
         // Can do in parallel
-//        for (int i = 0; i < x_train.size(); i++) {
-//            sum += Math.pow((x.get(i) - x_train.get(i)), 2);
-//        }
-
-        // Parallel
-        List<Double> parallelSum = new ArrayList<Double>();
-        IntStream.range(0, x_train.size()).forEach(i -> {
-            parallelSum.add(Math.pow((x.get(i) - x_train.get(i)), 2));
-        });
-        sum = parallelSum.parallelStream().reduce(0.0, Double::sum);
+        for (int i = 0; i < x_train.size(); i++) {
+            sum += Math.pow((x.get(i) - x_train.get(i)), 2);
+        }
 
         return Math.sqrt(sum);
     }
-
-
 }

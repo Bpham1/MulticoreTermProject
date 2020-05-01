@@ -197,10 +197,8 @@ public class DescisionTreeEstimator{
         this.Y = Y;
         XInputs.add(X);
         YInputs.add(Y);
-        if(feature_set == null){
-            IntStream idx_stream = IntStream.range(0, this.X.get(0).size());
-            feature_set = idx_stream.boxed().collect(Collectors.toList());
-        }
+        IntStream feature_stream = IntStream.range(0, this.X.get(0).size());
+        feature_set = feature_stream.boxed().collect(Collectors.toList());
         if(Y.size() == 1){
             classifiers = Y;
             return;
@@ -290,6 +288,9 @@ public class DescisionTreeEstimator{
                 }
             }
         }
+        treePool.clear();
+        XInputs.clear();
+        YInputs.clear();
     }
 
     //O(N)
